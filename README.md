@@ -1,4 +1,4 @@
-RefactoringPowerShellWithPester
+Refactoring PowerShell (with help from Pester)
 ===============================
 
 One of the earlier PowerShell functions that I published is called [Get-StringToken](http://gallery.technet.microsoft.com/Generic-PowerShell-string-e9ccfe73).  I decided to write it after seeing several people ask about string parsing, usually with regex, delimited strings with optional quotation marks, escape characters, etc.  (Think of trying to correctly handle all of the possible valid input of a CSV file using regex, and you'll get a feel for how much of a pain in the butt that can be.)
