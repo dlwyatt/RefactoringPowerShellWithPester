@@ -1,2 +1,7 @@
-Log
------------------
+####Commit [b4e87fbc](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/b4e87fbc9a841fa383fa84fe1992c930d8f835b1)####
+
+Here we go!  The `Get-StringToken` function is in the [StringTokens.psm1](https://github.com/dlwyatt/RefactoringPowerShellWithPester/blob/b4e87fbc9a841fa383fa84fe1992c930d8f835b1/StringTokens.psm1) script module, and [Tester.ps1](https://github.com/dlwyatt/RefactoringPowerShellWithPester/blob/b4e87fbc9a841fa383fa84fe1992c930d8f835b1/Tester.ps1) (if you can even call that a "test") is demonstration code which was copied and pasted pretty much verbatim onto the TechNet Script Gallery page where this code was uploaded.  Initial observations:
+
+- Tester.ps1 has to go.  It's going to be replaced with a proper suite of unit tests using Pester.  For this, I'll be using the latest Beta version of Pester v3 (currently available from https://github.com/pester/Pester/tree/Beta).  If Pester v3 is released by the time this refactoring log is finished, that link will have changed.
+- `Get-StringToken` itself is a single function around 350 lines long, 300 if you ignore the comment-based help.  Once we understand everything that it does and have a suite of tests to ensure its behavior remains consistent, we'll start to break that code up into much smaller, easy to understand functions.
+- One thing that the current version of `Get-StringToken` has going for it are comments next to many of the conditional statements.  These will help in understanding what the heck is going in in this 300-line blob of code, but eventually, we're going to get rid of those comments and replace them with code that is so easy to take in at a glance, it doesn't need to be commented anyway.
