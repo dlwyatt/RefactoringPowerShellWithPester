@@ -108,3 +108,7 @@ Not much difference in the code coverage metrics from this; up about another 2% 
 #### Commit [df856165](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/df856165488205a931e0a242d12b3a992fba44fc) - Testing the `-Delimiter` parameter
 
 Not much to see here.  Tests are just about identical to those for the `-Escape` parameter, as `-Delimiter` allows the same options of passing by array or in a single string.  Code coverage remains the same at 66.35%, proving my earlier point that just because the code executed doesn't mean I've actually tested all of the behavior.  A safer way to say it is that there is 33.65% of the code that I absolutely _have not tested_ yet, and 66.35% of the code _may_ have been tested.
+
+#### Commit [b57aafdf](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/b57aafdf83c83258155d230181a49f7f735a9cb8#diff-d41d8cd98f00b204e9800998ecf8427e) - Testing the `-Qualifier` parameter
+
+More of the same type of new tests, this time for `-Qualifier`.  Coverage still at 66.35%.
