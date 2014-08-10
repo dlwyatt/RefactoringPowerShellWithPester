@@ -315,4 +315,18 @@ Describe 'Get-StringToken (public API)' {
             }
         }
     }
+
+    Context 'When using the -IgnoreConsecutiveDelimiters switch' {
+        It 'Treats consecutive delimiters as a single one' {
+            $string = "One `t`t Two"
+            $expected = 'One', 'Two'
+            $result = @(Get-StringToken -String $string -IgnoreConsecutiveDelimiters)
+
+            $result.Count | Should Be $expected.Count
+            for ($i = 0; $i -lt $result.Count; $i++)
+            {
+                $result[$i] | Should BeExactly $expected[$i]
+            }
+        }
+    }
 }
