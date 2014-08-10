@@ -96,3 +96,11 @@ StringTokens.psm1 Get-StringToken  349 Tokens = $lineGroup.ToArray()
 ```
 
 64 percent... not too bad, considering I haven't tested any of the optional parameters to the function yet.  Keep in mind, though, that this just tells me how much code in the module was _executed_ during the tests; it's no guarantee that I've actually written enough assertions to consider all of that code _tested_.
+
+#### Commit [87c85c1b](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/87c85c1b8c1e7ac98f093d364a9277476cb0b290#diff-d41d8cd98f00b204e9800998ecf8427e) - Testing the `-Escape` parameter####
+
+Starting to write tests around each of the optional parameters; I picked `-Escape` as the lucky first contestant.  According to the documentation, examples, and what dim memory I have of writing this code, I gave the user a couple of options for passing in the list of escape characters.  You could choose to pass in an array (e.g.: `-Escape @('\', '#')`), or a single string containing the characters (or whatever combination of the two.)  Why I felt this was a good idea at the time, I don't know, but now it's part of the public API, and that's how it will stay.  It just means there's more behavior to test.
+
+I also realized that in the "default behavior" tests, I hadn't verified that no characters work as escape characters, other than doubling up the qualifier (quote).  I added a test for this, but it was very slow to run at first (using a full set of 0..65535 for the characters to test), so I limited it to just the basic ASCII range of 0..127.
+
+Not much difference in the code coverage metrics from this; up about another 2% to 66.35.
