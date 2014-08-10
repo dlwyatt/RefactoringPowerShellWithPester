@@ -128,3 +128,7 @@ I tested these two together since `-LineDelimiter` only matters if the `-Span` s
 Not much to see here, small and simple test.  Coverage metric unchanged at 70.19%.
 
 I'm really getting sick of copying and pasting this same loop to test array equality.  I was going to wait to change that until the Pester update to address it is merged in, but I think I'll just add an Assert-ArraysAreEqual function into this test script for now in the next commit.
+
+#### Commit [42fe4229](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/42fe42291adb1422d192bea738d4329657d03dae#diff-d41d8cd98f00b204e9800998ecf8427e) - Refactoring the test code a bit
+
+Much better!  Cleaned up all those annoying duplicated bits with calls to Assert-ArraysAreEqual.  Now to move on with writing more tests.
