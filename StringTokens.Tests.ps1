@@ -81,5 +81,62 @@ Describe 'Get-StringToken (public API)' {
                 $result[$i] | Should BeExactly $expected[$i]
             }
         }
+
+        It 'Does not use any escape characters other than a double quotation mark' {
+            $charsToIgnore = [char[]]("`r", "`n", '"')
+
+            # This test is quite slow, so I've limited it to just the basic ASCII range instead of
+            # a full 16-bit character set.
+            $chars = [char[]](0..127)
+
+            foreach ($char in $chars)
+            {
+                if ($charsToIgnore -contains $char) { continue }
+
+                $string = "`"$char`" `""
+                $result = @(Get-StringToken -String $string)
+
+                $result[0] | Should Be $char
+            }
+        }
+    }
+
+    Context 'When using the -Escape parameter' {
+        It 'Allows the specified characters to escape qualifiers, passed as an array or as a string' {
+            $escapeChars = [char[]](91..95)
+            $string = -join $(
+                '"Begin'
+
+                foreach ($char in $escapeChars)
+                {
+                    $char + '"'
+                }
+
+                'End"'
+            )
+
+            $expected = 'Begin' + '"' * $escapeChars.Count + 'End'
+
+            $result = @(Get-StringToken -String $string -Escape $escapeChars)
+            $result.Count | Should Be (1)
+            $result | Should Be $expected
+
+            $escapeCharsAsString = -join $escapeChars
+
+            $result = @(Get-StringToken -String $string -Escape $escapeCharsAsString)
+            $result.Count | Should Be (1)
+            $result | Should Be $expected
+        }
+
+        It 'Does not treat escape characters as anything special if they are not followed by a qualifier' {
+            $escapeChar = '\'
+            $string = '"One\"Two\Three"'
+            $expected = 'One"Two\Three'
+
+            $result = @(Get-StringToken -String $string -Escape $escapeChar)
+
+            $result.Count | Should Be (1)
+            $result | Should Be $expected
+        }
     }
 }
