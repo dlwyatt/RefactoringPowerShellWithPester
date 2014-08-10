@@ -5,14 +5,19 @@ Import-Module $scriptRoot\StringTokens.psm1 -Force -ErrorAction Stop
 
 function Assert-ArraysAreEqual
 {
-    param ([object[]] $First, [object[]] $Second)
+    param (
+        [object[]] $First,
+        [object[]] $Second,
+        [scriptblock] $Assertion = { $args[0] | Should BeExactly $args[1] }
+    )
+
     if ($null -eq $First)  { $First = @() }
     if ($null -eq $Second) { $Second = @() }
 
     $First.Count | Should Be $Second.Count
     for ($i = 0; $i -lt $First.Count; $i++)
     {
-        $First[$i] | Should BeExactly $Second[$i]
+        & $Assertion $First[$i] $Second[$i]
     }
 }
 
@@ -257,6 +262,55 @@ Describe 'Get-StringToken (public API)' {
             $result = @(Get-StringToken -String $string -IgnoreConsecutiveDelimiters)
 
             Assert-ArraysAreEqual $result $expected
+        }
+    }
+
+    Context 'When using the -GroupLines switch' {
+        function Compare-LineGroupObjects
+        {
+            param ($First, $Second)
+
+            if ($null -eq $First)  { $First  = @{ Tokens = @() } }
+            if ($null -eq $Second) { $Second = @{ Tokens = @() } }
+
+            Assert-ArraysAreEqual $First.Tokens $Second.Tokens
+        }
+
+        It 'Outputs an object with a Tokens property for each line with embedded EOL characters' {
+            $string = "One Two`r`nThree Four"
+            $expected = @(
+                @{ Tokens = 'One', 'Two' }
+                @{ Tokens = 'Three', 'Four' }
+            )
+
+            $result = @(Get-StringToken -String $string -GroupLines)
+
+            Assert-ArraysAreEqual $result $expected -Assertion ${function:Compare-LineGroupObjects}
+        }
+
+        It 'Outputs an object for each line with multiple lines of input' {
+            $strings = 'One Two', 'Three Four'
+            $expected = @(
+                @{ Tokens = 'One', 'Two' }
+                @{ Tokens = 'Three', 'Four' }
+            )
+
+            $result = @($strings | Get-StringToken -GroupLines)
+
+            Assert-ArraysAreEqual $result $expected -Assertion ${function:Compare-LineGroupObjects}
+        }
+
+        It 'Properly handles multi-line input in conjunction with the -Span switch and quoted multi-line tokens' {
+            $strings = '"One', 'Two" "Three Four"', "`"Five`r`nSix`"", 'Seven Eight'
+            $expected = @(
+                @{ Tokens = "One`r`nTwo", 'Three Four' }
+                @{ Tokens = @("Five`r`nSix") }
+                @{ Tokens = 'Seven', 'Eight' }
+            )
+
+            $result = @($strings | Get-StringToken -GroupLines -Span)
+
+            Assert-ArraysAreEqual $result $expected -Assertion ${function:Compare-LineGroupObjects}            
         }
     }
 }
