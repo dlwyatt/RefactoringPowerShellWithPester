@@ -263,4 +263,56 @@ Describe 'Get-StringToken (public API)' {
             }
         }
     }
+
+    Context 'When using the -Span and -LineDelimiter parameter' {
+        It 'Allows quoted tokens to span multiple lines via embedded EOL characters' {
+            $string = "`"One`r`nTwo`" Three"
+            $expected = "One`r`nTwo", 'Three'
+
+            $result = @(Get-StringToken -String $string -Span)
+            $result.Count | Should Be $expected.Count
+            for ($i = 0; $i -lt $result.Count; $i++)
+            {
+                $result[$i] | Should BeExactly $expected[$i]
+            }
+        }
+
+        It 'Allows quoted tokens to span multiple lines across input strings, using a default separator of CRLF' {
+            $strings = "`"One", "Two`" Three"
+            $expected = "One`r`nTwo", 'Three'
+
+            $result = @($strings | Get-StringToken -Span)
+            $result.Count | Should Be $expected.Count
+            for ($i = 0; $i -lt $result.Count; $i++)
+            {
+                $result[$i] | Should BeExactly $expected[$i]
+            }
+        }
+
+        It 'Allows quoted tokens to span multiple lines across input strings, using a user-specified line separator' {
+            $lineDelimiter = '|'
+            $strings = "`"One", "Two`" Three"
+            $expected = "One|Two", 'Three'
+
+            $result = @($strings | Get-StringToken -Span -LineDelimiter $lineDelimiter)
+            $result.Count | Should Be $expected.Count
+            for ($i = 0; $i -lt $result.Count; $i++)
+            {
+                $result[$i] | Should BeExactly $expected[$i]
+            }
+        }
+
+        It 'Only uses the -LineDelimiter value when spanning lines across input string boundaries, not embedded EOL chars' {
+            $lineDelimiter = '|'
+            $string = "`"One`r`nTwo`" Three"
+            $expected = "One`r`nTwo", 'Three'
+
+            $result = @($string | Get-StringToken -Span -LineDelimiter $lineDelimiter)
+            $result.Count | Should Be $expected.Count
+            for ($i = 0; $i -lt $result.Count; $i++)
+            {
+                $result[$i] | Should BeExactly $expected[$i]
+            }
+        }
+    }
 }
