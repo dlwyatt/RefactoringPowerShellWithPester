@@ -99,6 +99,18 @@ Describe 'Get-StringToken (public API)' {
                 $result[0] | Should Be $char
             }
         }
+
+        It 'Skips text after the closing qualifier up until the next delimiter' {
+            $string = '"This is a test"ThisIs"Garbage" SecondToken'
+            $expected = 'This is a test', 'SecondToken'
+            $result = @(Get-StringToken -String $string)
+
+            $result.Count | Should Be $expected.Count
+            for ($i = 0; $i -lt $result.Count; $i++)
+            {
+                $result[$i] | Should BeExactly $expected[$i]
+            }
+        }
     }
 
     Context 'When using the -Escape parameter' {
@@ -230,6 +242,20 @@ Describe 'Get-StringToken (public API)' {
             $expected = '"One', 'Two"'
 
             $result = @(Get-StringToken -String $string -Qualifier $qualifiers)
+            $result.Count | Should Be $expected.Count
+            for ($i = 0; $i -lt $result.Count; $i++)
+            {
+                $result[$i] | Should BeExactly $expected[$i]
+            }
+        }
+    }
+
+    Context 'When using the -NoDoubleQualifier parameter' {
+        It 'Should not treat a doubled qualifier as an escaped qualifier within the token' {
+            $string = '"One""Garbage" Two'
+            $expected = 'One', 'Two'
+
+            $result = @(Get-StringToken -String $string -NoDoubleQualifier)
             $result.Count | Should Be $expected.Count
             for ($i = 0; $i -lt $result.Count; $i++)
             {
