@@ -122,3 +122,9 @@ Coverage up to 68.27%.
 #### Commit [2a83d0c5](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/2a83d0c572b19c33cbf837e451331be8472c31b1#diff-d41d8cd98f00b204e9800998ecf8427e) - Testing the `-Span` and `-LineDelimiter` parameters
 
 I tested these two together since `-LineDelimiter` only matters if the `-Span` switch is also used.  Nothing too crazy going on here.  Coverage up to 70.19%.
+
+#### Commit [dc8b5d65](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/dc8b5d65126d77db9cb9d49d3407cac4d4e41d0a#diff-d41d8cd98f00b204e9800998ecf8427e) - Testing the `-IgnoreConsecutiveDelimiters` switch
+
+Not much to see here, small and simple test.  Coverage metric unchanged at 70.19%.
+
+I'm really getting sick of copying and pasting this same loop to test array equality.  I was going to wait to change that until the Pester update to address it is merged in, but I think I'll just add an Assert-ArraysAreEqual function into this test script for now in the next commit.
