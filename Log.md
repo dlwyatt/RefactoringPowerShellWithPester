@@ -132,3 +132,28 @@ I'm really getting sick of copying and pasting this same loop to test array equa
 #### Commit [42fe4229](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/42fe42291adb1422d192bea738d4329657d03dae#diff-d41d8cd98f00b204e9800998ecf8427e) - Refactoring the test code a bit
 
 Much better!  Cleaned up all those annoying duplicated bits with calls to Assert-ArraysAreEqual.  Now to move on with writing more tests.
+
+#### Commit [84375a2c](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/84375a2c2419e2e483c1b1072884f836a5c8bc22) - Testing the `-GroupLines` switch
+
+This is the last of the optional parameters on the list.  Code coverage is up to 93.27%; next step is to take a closer look at the lines that it says I missed, and see if I need to add some more tests around those edges.
+
+```posh
+Invoke-Pester -CodeCoverage .\StringTokens.psm1
+
+<#
+Code coverage report:
+Covered 93.27 % of 104 analyzed commands in 1 file.
+
+Missed commands:
+
+File              Function        Line Command
+----              --------        ---- -------
+StringTokens.psm1 Get-StringToken  158 Write-Output $currentToken.ToString()
+StringTokens.psm1 Get-StringToken  188 $null = $lineGroup.Add($currentToken.ToString())
+StringTokens.psm1 Get-StringToken  201 Write-Output (New-Object psobject -Property @{...
+StringTokens.psm1 Get-StringToken  201 New-Object psobject -Property @{...
+StringTokens.psm1 Get-StringToken  202 Tokens = $lineGroup.ToArray()
+StringTokens.psm1 Get-StringToken  205 $lineGroup.Clear()
+StringTokens.psm1 Get-StringToken  301 Write-Output $currentToken.ToString()
+#>
+```
