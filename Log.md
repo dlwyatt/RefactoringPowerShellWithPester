@@ -118,3 +118,7 @@ More of the same type of new tests, this time for `-Qualifier`.  Coverage still 
 Another straightforward test, though while writing this, I came across another bit of behavior to add to the "defaults" tests.  If you have a qualified (aka quoted) token, any text between the closing qualifier and the next delimiter is discarded.  For example, passing in a string of `'"Token One"Garbage "Token Two"` results in receiving an result of `@('Token One', 'Token Two)`.  This is a type of malformed input, and apparently that's how I decided to deal with it.  I'm not sure I like that now, but I can change it later.  For now, this is about testing the existing behavior.
 
 Coverage up to 68.27%.
+
+#### Commit [2a83d0c5](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/2a83d0c572b19c33cbf837e451331be8472c31b1#diff-d41d8cd98f00b204e9800998ecf8427e) - Testing the `-Span` and `-LineDelimiter` parameters
+
+I tested these two together since `-LineDelimiter` only matters if the `-Span` switch is also used.  Nothing too crazy going on here.  Coverage up to 70.19%.
