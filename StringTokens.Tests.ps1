@@ -105,6 +105,14 @@ Describe 'Get-StringToken (public API)' {
 
             Assert-ArraysAreEqual $result $expected
         }
+
+        It 'Treats end of line as the end of a quoted token (malformed input)' {
+            $strings = '"One', "Two`r`nThree"
+            $expected = 'One', 'Two', 'Three'
+            $result = @(Get-StringToken -String $strings)
+
+            Assert-ArraysAreEqual $result $expected
+        }
     }
 
     Context 'When using the -Escape parameter' {
@@ -277,10 +285,11 @@ Describe 'Get-StringToken (public API)' {
         }
 
         It 'Outputs an object with a Tokens property for each line with embedded EOL characters' {
-            $string = "One Two`r`nThree Four"
+            $string = "One Two`r`nThree `"Four`r`nFive"
             $expected = @(
                 @{ Tokens = 'One', 'Two' }
                 @{ Tokens = 'Three', 'Four' }
+                @{ Tokens = @('Five') }
             )
 
             $result = @(Get-StringToken -String $string -GroupLines)
