@@ -1,4 +1,4 @@
-####Commit [b4e87fbc](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/b4e87fbc9a841fa383fa84fe1992c930d8f835b1)####
+####Commit [b4e87fbc](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/b4e87fbc9a841fa383fa84fe1992c930d8f835b1)
 
 Here we go!  The `Get-StringToken` function is in the [StringTokens.psm1](https://github.com/dlwyatt/RefactoringPowerShellWithPester/blob/b4e87fbc9a841fa383fa84fe1992c930d8f835b1/StringTokens.psm1) script module, and [Tester.ps1](https://github.com/dlwyatt/RefactoringPowerShellWithPester/blob/b4e87fbc9a841fa383fa84fe1992c930d8f835b1/Tester.ps1) (if you can even call that a "test") is demonstration code which was copied and pasted pretty much verbatim onto the TechNet Script Gallery page where this code was uploaded.  Initial observations:
 
@@ -97,7 +97,7 @@ StringTokens.psm1 Get-StringToken  349 Tokens = $lineGroup.ToArray()
 
 64 percent... not too bad, considering I haven't tested any of the optional parameters to the function yet.  Keep in mind, though, that this just tells me how much code in the module was _executed_ during the tests; it's no guarantee that I've actually written enough assertions to consider all of that code _tested_.
 
-#### Commit [87c85c1b](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/87c85c1b8c1e7ac98f093d364a9277476cb0b290#diff-d41d8cd98f00b204e9800998ecf8427e) - Testing the `-Escape` parameter####
+#### Commit [87c85c1b](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/87c85c1b8c1e7ac98f093d364a9277476cb0b290#diff-d41d8cd98f00b204e9800998ecf8427e) - Testing the `-Escape` parameter
 
 Starting to write tests around each of the optional parameters; I picked `-Escape` as the lucky first contestant.  According to the documentation, examples, and what dim memory I have of writing this code, I gave the user a couple of options for passing in the list of escape characters.  You could choose to pass in an array (e.g.: `-Escape @('\', '#')`), or a single string containing the characters (or whatever combination of the two.)  Why I felt this was a good idea at the time, I don't know, but now it's part of the public API, and that's how it will stay.  It just means there's more behavior to test.
 
@@ -112,3 +112,9 @@ Not much to see here.  Tests are just about identical to those for the `-Escape`
 #### Commit [b57aafdf](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/b57aafdf83c83258155d230181a49f7f735a9cb8#diff-d41d8cd98f00b204e9800998ecf8427e) - Testing the `-Qualifier` parameter
 
 More of the same type of new tests, this time for `-Qualifier`.  Coverage still at 66.35%.
+
+#### Commit [5fa24f2b](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/5fa24f2b87cf12411642af0a5a2bc851449a6778#diff-d41d8cd98f00b204e9800998ecf8427e) - Testing the `-NoDoubleQualifier` switch
+
+Another straightforward test, though while writing this, I came across another bit of behavior to add to the "defaults" tests.  If you have a qualified (aka quoted) token, any text between the closing qualifier and the next delimiter is discarded.  For example, passing in a string of `'"Token One"Garbage "Token Two"` results in receiving an result of `@('Token One', 'Token Two)`.  This is a type of malformed input, and apparently that's how I decided to deal with it.  I'm not sure I like that now, but I can change it later.  For now, this is about testing the existing behavior.
+
+Coverage up to 68.27%.
