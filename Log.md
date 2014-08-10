@@ -157,3 +157,9 @@ StringTokens.psm1 Get-StringToken  205 $lineGroup.Clear()
 StringTokens.psm1 Get-StringToken  301 Write-Output $currentToken.ToString()
 #>
 ```
+
+#### Commit [3474bbaa](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/3474bbaa71b1fbac24c3ce0fd27ab988c5ab2db9#diff-d41d8cd98f00b204e9800998ecf8427e) - Coverage report up to 100%
+
+The missing commands in the coverage report all had to do with edge cases around encountering the end of a string or an EOL character within a quoted token, with and without the `-GroupLines` switch.  This is a form of malformed input, but something the function handles gracefully by just assuming that the user meant to close the quoted token before the end of the line.
+
+Now we can start to look at the actual code of StringTokens.psm1 and decide how to refactor it.  That's a project for another day, though; it's time for bed.
