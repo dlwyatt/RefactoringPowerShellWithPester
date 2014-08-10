@@ -139,4 +139,53 @@ Describe 'Get-StringToken (public API)' {
             $result | Should Be $expected
         }
     }
+
+    Context 'When using the -Delimiter parameter' {
+        It 'Allows the specified characters to be used as delimiters, passed in by array or in a single string' {
+            $delimiters = '|', '/', '\'
+            $string = 'One|Two/Three\Four'
+            $expected = 'One', 'Two', 'Three', 'Four'
+
+            $result = @(Get-StringToken -String $string -Delimiter $delimiters)
+            $result.Count | Should Be $expected.Count
+            for ($i = 0; $i -lt $result.Count; $i++)
+            {
+                $result[$i] | Should BeExactly $expected[$i]
+            }
+
+            $delimitersAsString = -join $delimiters
+            $result = @(Get-StringToken -String $string -Delimiter $delimitersAsString)
+            $result.Count | Should Be $expected.Count
+            for ($i = 0; $i -lt $result.Count; $i++)
+            {
+                $result[$i] | Should BeExactly $expected[$i]
+            }
+        }
+
+        It 'No longer treats the default delimiters of tab / space as delimiters if the user explicitly specifies them' {
+            $delimiter = ','
+            $string = "One Two`tThree,Four"
+            $expected = "One Two`tThree", 'Four'
+
+            $result = @(Get-StringToken -String $string -Delimiter $delimiter)
+            $result.Count | Should Be $expected.Count
+            for ($i = 0; $i -lt $result.Count; $i++)
+            {
+                $result[$i] | Should BeExactly $expected[$i]
+            }
+        }
+
+        It 'Still produces empty tokens between consecutive delimiters when explicitly specified' {
+            $delimiter = ','
+            $string = 'One,,Two'
+            $expected = 'One', '', 'Two'
+
+            $result = @(Get-StringToken -String $string -Delimiter $delimiter)
+            $result.Count | Should Be $expected.Count
+            for ($i = 0; $i -lt $result.Count; $i++)
+            {
+                $result[$i] | Should BeExactly $expected[$i]
+            }
+        }
+    }
 }
