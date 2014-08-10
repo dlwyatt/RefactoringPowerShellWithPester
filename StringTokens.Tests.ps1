@@ -188,4 +188,53 @@ Describe 'Get-StringToken (public API)' {
             }
         }
     }
+
+    Context 'When using the -Qualifier parameter' {
+        It 'Allows the specified qualifiers to be used, passed in by array or by string' {
+            $qualifiers = '"', "#", '|'
+            $string = '"One One" #Two Two# |Three Three|'
+            $expected = 'One One', 'Two Two', 'Three Three'
+
+            $result = @(Get-StringToken -String $string -Qualifier $qualifiers)
+            $result.Count | Should Be $expected.Count
+            for ($i = 0; $i -lt $result.Count; $i++)
+            {
+                $result[$i] | Should BeExactly $expected[$i]
+            }
+
+            $qualifiersAsString = -join $qualifiers
+            $result = @(Get-StringToken -String $string -Qualifier $qualifiersAsString)
+            $result.Count | Should Be $expected.Count
+            for ($i = 0; $i -lt $result.Count; $i++)
+            {
+                $result[$i] | Should BeExactly $expected[$i]
+            }
+        }
+
+        It 'Only uses matching qualifiers to enclose a single token; other qualifiers are treated as literals within that token' {
+            $qualifiers = '#|'
+            $string = '#One | One# |Two # Two|'
+            $expected = 'One | One', 'Two # Two'
+
+            $result = @(Get-StringToken -String $string -Qualifier $qualifiers)
+            $result.Count | Should Be $expected.Count
+            for ($i = 0; $i -lt $result.Count; $i++)
+            {
+                $result[$i] | Should BeExactly $expected[$i]
+            }
+        }
+
+        It 'No longer treats the default qualifer (double quotation mark) as a qualifier when the user explicitly specifies others' {
+            $qualifiers = '#'
+            $string = '"One Two"'
+            $expected = '"One', 'Two"'
+
+            $result = @(Get-StringToken -String $string -Qualifier $qualifiers)
+            $result.Count | Should Be $expected.Count
+            for ($i = 0; $i -lt $result.Count; $i++)
+            {
+                $result[$i] | Should BeExactly $expected[$i]
+            }
+        }
+    }
 }
