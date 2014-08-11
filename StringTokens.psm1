@@ -93,40 +93,7 @@ function Get-StringToken
     {
         $null = $PSBoundParameters.Remove('String')
         $parseState = New-ParseState @PSBoundParameters
-
-        $currentToken = New-Object System.Text.StringBuilder
-        $currentQualifer = $null
-        
-        $qualifiers = @{}
-        foreach ($item in $Qualifier)
-        {
-            foreach ($character in $item.GetEnumerator())
-            {
-                $qualifiers[$character] = $true
-            }
-        }
-
-        $escapeChars = @{}
-        foreach ($item in $Escape)
-        {
-            foreach ($character in $item.GetEnumerator())
-            {
-                $escapeChars[$character] = $true
-            }
-        }
-
-        if ($NoDoubleQualifier)
-        {
-            $doubleQualifierIsEscape = $false
-        }
-        else
-        {
-            $doubleQualifierIsEscape = $true
-        }
-
-        $lineGroup = New-Object System.Collections.ArrayList
-
-    } # begin
+    }
 
     process
     {
@@ -134,69 +101,69 @@ function Get-StringToken
         {
             # If the last $str value was in the middle of building a token when the end of the string was reached,
             # handle it before parsing the current $str.
-            if ($currentToken.Length -gt 0)
+            if ($parseState.CurrentToken.Length -gt 0)
             {
-                if ($currentQualifer -ne $null -and $Span)
+                if ($parseState.CurrentQualifier -ne $null -and $Span)
                 {
-                    $null = $currentToken.Append($LineDelimiter)
+                    $null = $parseState.CurrentToken.Append($LineDelimiter)
                 }
 
                 else
                 {
                     if ($GroupLines)
                     {
-                        $null = $lineGroup.Add($currentToken.ToString())
+                        $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
                     }
                     else
                     {
-                        Write-Output $currentToken.ToString()
+                        Write-Output $parseState.CurrentToken.ToString()
                     }
 
-                    $currentToken.Length = 0
-                    $currentQualifer = $null
+                    $parseState.CurrentToken.Length = 0
+                    $parseState.CurrentQualifier = $null
                 }
             }
 
-            if ($GroupLines -and $lineGroup.Count -gt 0)
+            if ($GroupLines -and $parseState.LineGroup.Count -gt 0)
             {
                 Write-Output (New-Object psobject -Property @{
-                    Tokens = $lineGroup.ToArray()
+                    Tokens = $parseState.LineGroup.ToArray()
                 })
 
-                $lineGroup.Clear()
+                $parseState.LineGroup.Clear()
             }
 
             for ($i = 0; $i -lt $str.Length; $i++)
             {
                 $currentChar = $str.Chars($i)
 
-                if ($currentQualifer)
+                if ($parseState.CurrentQualifier)
                 {
                     # Line breaks in qualified token.
                     if (($currentChar -eq "`n" -or $currentChar -eq "`r") -and -not $Span)
                     {
-                        if ($currentToken.Length -gt 0 -or -not $IgnoreConsecutiveDelimiters)
+                        if ($parseState.CurrentToken.Length -gt 0 -or -not $IgnoreConsecutiveDelimiters)
                         {
                             if ($GroupLines)
                             {
-                                $null = $lineGroup.Add($currentToken.ToString())
+                                $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
                             }
                             else
                             {
-                                Write-Output $currentToken.ToString()
+                                Write-Output $parseState.CurrentToken.ToString()
                             }
                                 
-                            $currentToken.Length = 0
-                            $currentQualifer = $null
+                            $parseState.CurrentToken.Length = 0
+                            $parseState.CurrentQualifier = $null
                         }
 
-                        if ($GroupLines -and $lineGroup.Count -gt 0)
+                        if ($GroupLines -and $parseState.LineGroup.Count -gt 0)
                         {
                             Write-Output (New-Object psobject -Property @{
-                                Tokens = $lineGroup.ToArray()
+                                Tokens = $parseState.LineGroup.ToArray()
                             })
 
-                            $lineGroup.Clear()
+                            $parseState.LineGroup.Clear()
                         }
                         
                         # We're not including the line breaks in the token, so eat the rest of the consecutive line break characters.
@@ -207,27 +174,27 @@ function Get-StringToken
                     }
 
                     # Embedded, escaped qualifiers
-                    elseif (($escapeChars.ContainsKey($currentChar) -or ($currentChar -eq $currentQualifer -and $doubleQualifierIsEscape)) -and
-                             $i+1 -lt $str.Length -and $str.Chars($i+1) -eq $currentQualifer)
+                    elseif (($parseState.EscapeChars.ContainsKey($currentChar) -or ($currentChar -eq $parseState.CurrentQualifier -and $parseState.DoubleQualifierIsEscape)) -and
+                             $i+1 -lt $str.Length -and $str.Chars($i+1) -eq $parseState.CurrentQualifier)
                     {
-                        $null = $currentToken.Append($currentQualifer)
+                        $null = $parseState.CurrentToken.Append($parseState.CurrentQualifier)
                         $i++
                     }
 
                     # Closing qualifier
-                    elseif ($currentChar -eq $currentQualifer)
+                    elseif ($currentChar -eq $parseState.CurrentQualifier)
                     {
                         if ($GroupLines)
                         {
-                            $null = $lineGroup.Add($currentToken.ToString())
+                            $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
                         }
                         else
                         {
-                            Write-Output $currentToken.ToString()
+                            Write-Output $parseState.CurrentToken.ToString()
                         }
                         
-                        $currentToken.Length = 0
-                        $currentQualifer = $null
+                        $parseState.CurrentToken.Length = 0
+                        $parseState.CurrentQualifier = $null
 
                         # Eat any non-delimiter, non-EOL text after the closing qualifier, plus the next delimiter.  Sets the loop up
                         # to begin processing the next token (or next consecutive delimiter) next time through.  End-of-line characters
@@ -246,7 +213,7 @@ function Get-StringToken
                     # Token content
                     else
                     {
-                        $null = $currentToken.Append($currentChar)
+                        $null = $parseState.CurrentToken.Append($currentChar)
                     }
 
                 } # end if ($currentQualifier)
@@ -256,63 +223,63 @@ function Get-StringToken
                     Write-Debug ([int]$currentChar)
 
                     # Opening qualifier
-                    if ($currentToken.ToString() -match '^\s*$' -and $qualifiers.ContainsKey($currentChar))
+                    if ($parseState.CurrentToken.ToString() -match '^\s*$' -and $parseState.Qualifiers.ContainsKey($currentChar))
                     {
-                        $currentQualifer = $currentChar
-                        $currentToken.Length = 0
+                        $parseState.CurrentQualifier = $currentChar
+                        $parseState.CurrentToken.Length = 0
                     }
 
                     # Delimiter
                     elseif ($parseState.Delimiters.ContainsKey($currentChar))
                     {
-                        if ($currentToken.Length -gt 0 -or -not $IgnoreConsecutiveDelimiters)
+                        if ($parseState.CurrentToken.Length -gt 0 -or -not $IgnoreConsecutiveDelimiters)
                         {
                             if ($GroupLines)
                             {
-                                $null = $lineGroup.Add($currentToken.ToString())
+                                $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
                             }
                             else
                             {
-                                Write-Output $currentToken.ToString()
+                                Write-Output $parseState.CurrentToken.ToString()
                             }
                             
-                            $currentToken.Length = 0
-                            $currentQualifer = $null                            
+                            $parseState.CurrentToken.Length = 0
+                            $parseState.CurrentQualifier = $null
                         }
                     }
 
                     # Line breaks (not treated quite the same as delimiters)
                     elseif ($currentChar -eq "`n" -or $currentChar -eq "`r")
                     {
-                        if ($currentToken.Length -gt 0)
+                        if ($parseState.CurrentToken.Length -gt 0)
                         {
                             if ($GroupLines)
                             {
-                                $null = $lineGroup.Add($currentToken.ToString())
+                                $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
                             }
                             else
                             {
-                                Write-Output $currentToken.ToString()
+                                Write-Output $parseState.CurrentToken.ToString()
                             }
                             
-                            $currentToken.Length = 0
-                            $currentQualifer = $null
+                            $parseState.CurrentToken.Length = 0
+                            $parseState.CurrentQualifier = $null
                         }
 
-                        if ($GroupLines -and $lineGroup.Count -gt 0)
+                        if ($GroupLines -and $parseState.LineGroup.Count -gt 0)
                         {
                             Write-Output (New-Object psobject -Property @{
-                                Tokens = $lineGroup.ToArray()
+                                Tokens = $parseState.LineGroup.ToArray()
                             })
 
-                            $lineGroup.Clear()
+                            $parseState.LineGroup.Clear()
                         }
                     }
 
                     # Token content
                     else
                     {
-                        $null = $currentToken.Append($currentChar)
+                        $null = $parseState.CurrentToken.Append($currentChar)
                     }
 
                 } # -not $currentQualifier
@@ -325,22 +292,22 @@ function Get-StringToken
 
     end
     {
-        if ($currentToken.Length -gt 0)
+        if ($parseState.CurrentToken.Length -gt 0)
         {
             if ($GroupLines)
             {
-                $null = $lineGroup.Add($currentToken.ToString())
+                $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
             }
             else
             {
-                Write-Output $currentToken.ToString()
+                Write-Output $parseState.CurrentToken.ToString()
             }
         }
 
-        if ($GroupLines -and $lineGroup.Count -gt 0)
+        if ($GroupLines -and $parseState.LineGroup.Count -gt 0)
         {
             Write-Output (New-Object psobject -Property @{
-                Tokens = $lineGroup.ToArray()
+                Tokens = $parseState.LineGroup.ToArray()
             })
         }
     }
@@ -380,9 +347,6 @@ function New-ParseState
         $IgnoreConsecutiveDelimiters
     )
 
-    $currentToken = New-Object System.Text.StringBuilder
-    $currentQualifer = $null
-        
     $delimiters = @{}
     foreach ($item in $Delimiter)
     {
@@ -419,16 +383,14 @@ function New-ParseState
         $doubleQualifierIsEscape = $true
     }
 
-    $lineGroup = New-Object System.Collections.ArrayList
-
     New-Object psobject -Property @{
-        CurrentToken                = $currentToken
+        CurrentToken                = New-Object System.Text.StringBuilder
         CurrentQualifier            = $null
         Delimiters                  = $delimiters
         Qualifiers                  = $qualifiers
         EscapeChars                 = $escapeChars
         DoubleQualifierIsEscape     = $doubleQualifierIsEscape
-        LineGroup                   = $lineGroup
+        LineGroup                   = New-Object System.Collections.ArrayList
         GroupLines                  = [bool]$GroupLines
         IgnoreConsecutiveDelimiters = [bool]$IgnoreConsecutiveDelimiters
         Span                        = [bool]$Span
