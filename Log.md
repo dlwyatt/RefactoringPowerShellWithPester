@@ -166,7 +166,7 @@ Now we can start to look at the actual code of StringTokens.psm1 and decide how 
 
 #### Commit [9d3df736](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/9d3df73601c334dbe599398131a055a803d71548) - Moving state / option variables into a single object
 
-This is looking ahead a bit.  I know that I want to extract methods from the body of `Get-StringToken`, and it will be easier to pass around a single state variable to these methods than it would be to pass around all of the various individual variables.  This also abstracts those details from the `Get-StringToken` function itself, so they can change later without affecting that part fo the code.
+This is looking ahead a bit.  I know that I want to extract methods from the body of `Get-StringToken`, and it will be easier to pass around a single state variable to these methods than it would be to pass around all of the various individual variables.  This also abstracts those details from the `Get-StringToken` function itself, so they can change later without affecting that part of the code.
 
 Notice that nothing's using the `$parseState` varible yet; in fact, I haven't changed any of the code that would affect a test (and they're all still passing.)  Refactoring should be done in small steps, and sometimes that means adding new code which isn't used yet.
 
