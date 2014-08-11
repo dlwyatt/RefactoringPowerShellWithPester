@@ -209,3 +209,7 @@ Now we're cooking!  This block of code was repeated 5 times nearly verbatim, and
 ```
 
 Thanks to going to the trouble of setting up the `$parseState` variable, I only had to define a single parameter to this function (and didn't rely on automatically resolving variables in the parent scope, which I generally try to avoid.)
+
+#### Commit [bf597d7f](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/bf597d7f773a5132a412e9897448568755a90c4b) - Make that 6 times...
+
+Replaced another block of that duplicated code with a call to `CompleteCurrentToken`.
