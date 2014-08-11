@@ -116,11 +116,7 @@ function Get-StringToken
 
             if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
             {
-                Write-Output (New-Object psobject -Property @{
-                    Tokens = $parseState.LineGroup.ToArray()
-                })
-
-                $parseState.LineGroup.Clear()
+                CompleteCurrentLineGroup -ParseState $parseState
             }
 
             for ($i = 0; $i -lt $str.Length; $i++)
@@ -139,11 +135,7 @@ function Get-StringToken
 
                         if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
                         {
-                            Write-Output (New-Object psobject -Property @{
-                                Tokens = $parseState.LineGroup.ToArray()
-                            })
-
-                            $parseState.LineGroup.Clear()
+                            CompleteCurrentLineGroup -ParseState $parseState
                         }
                         
                         # We're not including the line breaks in the token, so eat the rest of the consecutive line break characters.
@@ -218,11 +210,7 @@ function Get-StringToken
 
                         if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
                         {
-                            Write-Output (New-Object psobject -Property @{
-                                Tokens = $parseState.LineGroup.ToArray()
-                            })
-
-                            $parseState.LineGroup.Clear()
+                            CompleteCurrentLineGroup -ParseState $parseState
                         }
                     }
 
@@ -249,9 +237,7 @@ function Get-StringToken
 
         if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
         {
-            Write-Output (New-Object psobject -Property @{
-                Tokens = $parseState.LineGroup.ToArray()
-            })
+            CompleteCurrentLineGroup -ParseState $parseState
         }
     }
 
@@ -354,4 +340,13 @@ function CompleteCurrentToken($ParseState)
 
     $ParseState.CurrentToken.Length = 0
     $ParseState.CurrentQualifier = $null
+}
+
+function CompleteCurrentLineGroup($ParseState)
+{
+    New-Object psobject -Property @{
+        Tokens = $ParseState.LineGroup.ToArray()
+    }
+
+    $ParseState.LineGroup.Clear()
 }
