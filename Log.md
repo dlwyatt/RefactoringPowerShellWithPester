@@ -185,3 +185,7 @@ The next few refactoring steps are going to be more of the same:  Updating a ref
 #### Commit [086b8cfb](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/086b8cfb01d3e07d7a4f0282d92093222b4f7bae) - Completing the transition to using `$parseState`
 
 The `begin` block of `Get-StringToken` has been completely extracted, and the rest of the function now only refers to `$parseState`.  More to come on that later, but for now, this makes it very easy to extract out whole bits of code into their own functions where appropriate.
+
+#### Commit [6080863c](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/6080863c836c650d5f9b7f30ea3d7b6b6c9b7895) - More `$parseState` transition
+
+The previous update only covered getting rid of the variables that were contained in the `begin` block.  `$parseState` also contains several properties which come directly from parameters passed to `Get-StringToken` which I forgot to update; this has been corrected.
