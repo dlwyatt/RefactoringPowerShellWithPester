@@ -175,3 +175,9 @@ Next steps:  Change references to the various variables initialized in the `begi
 #### Commit [334985df](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/334985df90ae28be887ea79c5109096e751d6317) - Replacing `$delimiters` with `$parseState.Delimiters`
 
 Small, easy change, all tests still work.  Next, I'll remove the `$delimiters` variable initialization code from the `begin` block of `Get-StringToken`.  If I haven't missed anything, that variable should no longer be used anyway, and nothing will miss it.
+
+#### Commit [68bd52fe](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/68bd52fe1994da715da71c606237c6cf97599a0d) - Removing the old $delimiters variable
+
+Success:  deleted those 9 lines of code, and all tests still worked.
+
+The next few refactoring steps are going to be more of the same:  Updating a reference to an old variable with a reference to a $parseState property instead, then removing the old variable.  Because writing these log file updates takes much longer than the refactoring itself, and because these steps will all be repeating the same task, I'll combine them into a single commit and log update.  (However, I'll still be running the Pester test script after each change.)
