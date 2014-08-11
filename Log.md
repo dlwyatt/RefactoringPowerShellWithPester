@@ -213,3 +213,7 @@ Thanks to going to the trouble of setting up the `$parseState` variable, I only 
 #### Commit [bf597d7f](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/bf597d7f773a5132a412e9897448568755a90c4b) - Make that 6 times...
 
 Replaced another block of that duplicated code with a call to `CompleteCurrentToken`.
+
+#### Commit [1ece1150](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/1ece11501dc990fa793cb9d92f0e91ada6d6a872) - Extracted more duplicate code into `CompleteCurrentLineGroup` method
+
+Same idea, different duplication.
