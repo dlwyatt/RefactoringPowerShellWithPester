@@ -241,12 +241,12 @@ function Get-StringToken
                         # Eat any non-delimiter, non-EOL text after the closing qualifier, plus the next delimiter.  Sets the loop up
                         # to begin processing the next token (or next consecutive delimiter) next time through.  End-of-line characters
                         # are left alone, because eating them can interfere with the GroupLines switch behavior.
-                        while ($i+1 -lt $str.Length -and $str.Chars($i+1) -ne "`r" -and $str.Chars($i+1) -ne "`n" -and -not $delimiters.ContainsKey($str.Chars($i+1)))
+                        while ($i+1 -lt $str.Length -and $str.Chars($i+1) -ne "`r" -and $str.Chars($i+1) -ne "`n" -and -not $parseState.Delimiters.ContainsKey($str.Chars($i+1)))
                         {
                             $i++
                         }
 
-                        if ($i+1 -lt $str.Length -and $delimiters.ContainsKey($str.Chars($i+1)))
+                        if ($i+1 -lt $str.Length -and $parseState.Delimiters.ContainsKey($str.Chars($i+1)))
                         {
                             $i++
                         }
@@ -272,7 +272,7 @@ function Get-StringToken
                     }
 
                     # Delimiter
-                    elseif ($delimiters.ContainsKey($currentChar))
+                    elseif ($parseState.Delimiters.ContainsKey($currentChar))
                     {
                         if ($currentToken.Length -gt 0 -or -not $IgnoreConsecutiveDelimiters)
                         {
