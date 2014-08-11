@@ -103,14 +103,14 @@ function Get-StringToken
             # handle it before parsing the current $str.
             if ($parseState.CurrentToken.Length -gt 0)
             {
-                if ($parseState.CurrentQualifier -ne $null -and $Span)
+                if ($parseState.CurrentQualifier -ne $null -and $parseState.Span)
                 {
-                    $null = $parseState.CurrentToken.Append($LineDelimiter)
+                    $null = $parseState.CurrentToken.Append($parseState.LineDelimiter)
                 }
 
                 else
                 {
-                    if ($GroupLines)
+                    if ($parseState.GroupLines)
                     {
                         $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
                     }
@@ -124,7 +124,7 @@ function Get-StringToken
                 }
             }
 
-            if ($GroupLines -and $parseState.LineGroup.Count -gt 0)
+            if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
             {
                 Write-Output (New-Object psobject -Property @{
                     Tokens = $parseState.LineGroup.ToArray()
@@ -140,11 +140,11 @@ function Get-StringToken
                 if ($parseState.CurrentQualifier)
                 {
                     # Line breaks in qualified token.
-                    if (($currentChar -eq "`n" -or $currentChar -eq "`r") -and -not $Span)
+                    if (($currentChar -eq "`n" -or $currentChar -eq "`r") -and -not $parseState.Span)
                     {
-                        if ($parseState.CurrentToken.Length -gt 0 -or -not $IgnoreConsecutiveDelimiters)
+                        if ($parseState.CurrentToken.Length -gt 0 -or -not $parseState.IgnoreConsecutiveDelimiters)
                         {
-                            if ($GroupLines)
+                            if ($parseState.GroupLines)
                             {
                                 $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
                             }
@@ -157,7 +157,7 @@ function Get-StringToken
                             $parseState.CurrentQualifier = $null
                         }
 
-                        if ($GroupLines -and $parseState.LineGroup.Count -gt 0)
+                        if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
                         {
                             Write-Output (New-Object psobject -Property @{
                                 Tokens = $parseState.LineGroup.ToArray()
@@ -184,7 +184,7 @@ function Get-StringToken
                     # Closing qualifier
                     elseif ($currentChar -eq $parseState.CurrentQualifier)
                     {
-                        if ($GroupLines)
+                        if ($parseState.GroupLines)
                         {
                             $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
                         }
@@ -232,9 +232,9 @@ function Get-StringToken
                     # Delimiter
                     elseif ($parseState.Delimiters.ContainsKey($currentChar))
                     {
-                        if ($parseState.CurrentToken.Length -gt 0 -or -not $IgnoreConsecutiveDelimiters)
+                        if ($parseState.CurrentToken.Length -gt 0 -or -not $parseState.IgnoreConsecutiveDelimiters)
                         {
-                            if ($GroupLines)
+                            if ($parseState.GroupLines)
                             {
                                 $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
                             }
@@ -253,7 +253,7 @@ function Get-StringToken
                     {
                         if ($parseState.CurrentToken.Length -gt 0)
                         {
-                            if ($GroupLines)
+                            if ($parseState.GroupLines)
                             {
                                 $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
                             }
@@ -266,7 +266,7 @@ function Get-StringToken
                             $parseState.CurrentQualifier = $null
                         }
 
-                        if ($GroupLines -and $parseState.LineGroup.Count -gt 0)
+                        if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
                         {
                             Write-Output (New-Object psobject -Property @{
                                 Tokens = $parseState.LineGroup.ToArray()
@@ -294,7 +294,7 @@ function Get-StringToken
     {
         if ($parseState.CurrentToken.Length -gt 0)
         {
-            if ($GroupLines)
+            if ($parseState.GroupLines)
             {
                 $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
             }
@@ -304,7 +304,7 @@ function Get-StringToken
             }
         }
 
-        if ($GroupLines -and $parseState.LineGroup.Count -gt 0)
+        if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
         {
             Write-Output (New-Object psobject -Property @{
                 Tokens = $parseState.LineGroup.ToArray()
