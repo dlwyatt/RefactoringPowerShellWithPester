@@ -110,17 +110,7 @@ function Get-StringToken
 
                 else
                 {
-                    if ($parseState.GroupLines)
-                    {
-                        $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
-                    }
-                    else
-                    {
-                        Write-Output $parseState.CurrentToken.ToString()
-                    }
-
-                    $parseState.CurrentToken.Length = 0
-                    $parseState.CurrentQualifier = $null
+                    CompleteCurrentToken -ParseState $parseState
                 }
             }
 
