@@ -282,3 +282,7 @@ Now, those two `if` statements containing the calls to `CompleteCurrentToken` an
 #### Commit [6aa72eb5](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/6aa72eb58c3c9ecfefc33a8a809cda75be61dc830) - More duplicate code extraction
 
 There were several instances of calls to `CompleteCurrentToken` or `CompleteCurrentLineGroup` instead `if` statements that were identical, or nearly so.  These have been extracted into methods called `CheckForCompletedToken` and `CheckForCompletedLineGroup`.  Note the `-CheckingAtDelimiter` switch to `CheckForCompletedToken` ; this was needed due to the slightly different conditional logic used in some of the old code blocks.  When you're checking for a completed token at a delimiter, it's okay to output an empty token if the `-IgnoreConsecutiveDelimiters` switch wasn't set.  Speaking of which, using `-not $ParseState.IgnoreConsecutiveDelimiters` in a conditional is not as easy to read as something that's a positive assertion.  This is easy to fix by just flipping the meaning of the flag on the `$parseState` object and giving it a different name.  Because we've now moved the only reference to that `IgnoreConsecutiveDelimiters` property into a new method, this change is easily made (and will be the next commit.)
+
+#### Commit [279c4b49](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/279c4b49579944828d7d875bd248865828c0f8ad) - Inverted boolean flag
+
+As mentioned in the previous update.  On that note, time to sleep.
