@@ -107,15 +107,8 @@ function Get-StringToken
             }
             else
             {
-                if ($parseState.CurrentToken.Length -gt 0)
-                {
-                    CompleteCurrentToken -ParseState $parseState
-                }
-
-                if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
-                {
-                    CompleteCurrentLineGroup -ParseState $parseState
-                }
+                CheckForCompletedToken -ParseState $parseState
+                CheckForCompletedLineGroup -ParseState $parseState
             }
 
             for ($i = 0; $i -lt $str.Length; $i++)
@@ -127,16 +120,9 @@ function Get-StringToken
                     # Line breaks in qualified token.
                     if (($currentChar -eq "`n" -or $currentChar -eq "`r") -and -not $parseState.Span)
                     {
-                        if ($parseState.CurrentToken.Length -gt 0 -or -not $parseState.IgnoreConsecutiveDelimiters)
-                        {
-                            CompleteCurrentToken -ParseState $parseState
-                        }
+                        CheckForCompletedToken -ParseState $parseState -CheckingAtDelimiter
+                        CheckForCompletedLineGroup -ParseState $parseState
 
-                        if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
-                        {
-                            CompleteCurrentLineGroup -ParseState $parseState
-                        }
-                        
                         # We're not including the line breaks in the token, so eat the rest of the consecutive line break characters.
                         while ($i+1 -lt $str.Length -and ($str.Chars($i+1) -eq "`r" -or $str.Chars($i+1) -eq "`n"))
                         {
@@ -193,24 +179,14 @@ function Get-StringToken
                     # Delimiter
                     elseif ($parseState.Delimiters.ContainsKey($currentChar))
                     {
-                        if ($parseState.CurrentToken.Length -gt 0 -or -not $parseState.IgnoreConsecutiveDelimiters)
-                        {
-                            CompleteCurrentToken -ParseState $parseState
-                        }
+                        CheckForCompletedToken -ParseState $parseState -CheckingAtDelimiter
                     }
 
                     # Line breaks (not treated quite the same as delimiters)
                     elseif ($currentChar -eq "`n" -or $currentChar -eq "`r")
                     {
-                        if ($parseState.CurrentToken.Length -gt 0)
-                        {
-                            CompleteCurrentToken -ParseState $parseState
-                        }
-
-                        if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
-                        {
-                            CompleteCurrentLineGroup -ParseState $parseState
-                        }
+                        CheckForCompletedToken -ParseState $parseState
+                        CheckForCompletedLineGroup -ParseState $parseState
                     }
 
                     # Token content
@@ -229,15 +205,8 @@ function Get-StringToken
 
     end
     {
-        if ($parseState.CurrentToken.Length -gt 0)
-        {
-            CompleteCurrentToken -ParseState $parseState
-        }
-
-        if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
-        {
-            CompleteCurrentLineGroup -ParseState $parseState
-        }
+        CheckForCompletedToken -ParseState $parseState
+        CheckForCompletedLineGroup -ParseState $parseState
     }
 
 } # function Get-StringToken
@@ -326,6 +295,15 @@ function New-ParseState
     }
 }
 
+function CheckForCompletedToken($ParseState, [switch] $CheckingAtDelimiter)
+{
+    if ($ParseState.CurrentToken.Length -gt 0 -or
+        ($CheckingAtDelimiter -and -not $ParseState.IgnoreConsecutiveDelimiters))
+    {
+        CompleteCurrentToken -ParseState $ParseState
+    }
+}
+
 function CompleteCurrentToken($ParseState)
 {
     if ($ParseState.GroupLines)
@@ -339,6 +317,14 @@ function CompleteCurrentToken($ParseState)
 
     $ParseState.CurrentToken.Length = 0
     $ParseState.CurrentQualifier = $null
+}
+
+function CheckForCompletedLineGroup($ParseState)
+{
+    if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
+    {
+        CompleteCurrentLineGroup -ParseState $parseState
+    }
 }
 
 function CompleteCurrentLineGroup($ParseState)
