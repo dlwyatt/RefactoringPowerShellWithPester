@@ -97,15 +97,6 @@ function Get-StringToken
         $currentToken = New-Object System.Text.StringBuilder
         $currentQualifer = $null
         
-        $delimiters = @{}
-        foreach ($item in $Delimiter)
-        {
-            foreach ($character in $item.GetEnumerator())
-            {
-                $delimiters[$character] = $true
-            }
-        }
-
         $qualifiers = @{}
         foreach ($item in $Qualifier)
         {
