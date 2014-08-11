@@ -163,3 +163,11 @@ StringTokens.psm1 Get-StringToken  301 Write-Output $currentToken.ToString()
 The missing commands in the coverage report all had to do with edge cases around encountering the end of a string or an EOL character within a quoted token, with and without the `-GroupLines` switch.  This is a form of malformed input, but something the function handles gracefully by just assuming that the user meant to close the quoted token before the end of the line.
 
 Now we can start to look at the actual code of StringTokens.psm1 and decide how to refactor it.  That's a project for another day, though; it's time for bed.
+
+#### Commit [9d3df736](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/9d3df73601c334dbe599398131a055a803d71548) - Moving state / option variables into a single object
+
+This is looking ahead a bit.  I know that I want to extract methods from the body of `Get-StringToken`, and it will be easier to pass around a single state variable to these methods than it would be to pass around all of the various individual variables.  This also abstracts those details from the `Get-StringToken` function itself, so they can change later without affecting that part fo the code.
+
+Notice that nothing's using the `$parseState` varible yet; in fact, I haven't changed any of the code that would affect a test (and they're all still passing.)  Refactoring should be done in small steps, and sometimes that means adding new code which isn't used yet.
+
+Next steps:  Change references to the various variables initialized in the `begin` block to property references on `$parseState` instead.  Once those are all done, I should be able to delete the rest of the `begin` block (leaving only the call to `New-ParseState`), freeing me up to start to extract out code from the rest of the function easily.
