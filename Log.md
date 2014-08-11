@@ -171,3 +171,7 @@ This is looking ahead a bit.  I know that I want to extract methods from the bod
 Notice that nothing's using the `$parseState` varible yet; in fact, I haven't changed any of the code that would affect a test (and they're all still passing.)  Refactoring should be done in small steps, and sometimes that means adding new code which isn't used yet.
 
 Next steps:  Change references to the various variables initialized in the `begin` block to property references on `$parseState` instead.  Once those are all done, I should be able to delete the rest of the `begin` block (leaving only the call to `New-ParseState`), freeing me up to start to extract out code from the rest of the function easily.
+
+#### Commit [334985df](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/334985df90ae28be887ea79c5109096e751d6317) - Replacing `$delimiters` with `$parseState.Delimiters`
+
+Small, easy change, all tests still work.  Next, I'll remove the `$delimiters` variable initialization code from the `begin` block of `Get-StringToken`.  If I haven't missed anything, that variable should no longer be used anyway, and nothing will miss it.
