@@ -189,3 +189,23 @@ The `begin` block of `Get-StringToken` has been completely extracted, and the re
 #### Commit [6080863c](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/6080863c836c650d5f9b7f30ea3d7b6b6c9b7895) - More `$parseState` transition
 
 The previous update only covered getting rid of the variables that were contained in the `begin` block.  `$parseState` also contains several properties which come directly from parameters passed to `Get-StringToken` which I forgot to update; this has been corrected.
+
+#### Commit [5f17f97f](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/5f17f97f29d2c9e23cdde546977a4fe7f35c2510) - Extracted duplicate code into `CompleteCurrentToken` method
+
+Now we're cooking!  This block of code was repeated 5 times nearly verbatim, and has been replaced with 5 calls to a single function:
+
+```posh
+    if ($ParseState.GroupLines)
+    {
+        $null = $ParseState.LineGroup.Add($ParseState.CurrentToken.ToString())
+    }
+    else
+    {
+        $ParseState.CurrentToken.ToString()
+    }
+
+    $ParseState.CurrentToken.Length = 0
+    $ParseState.CurrentQualifier = $null
+```
+
+Thanks to going to the trouble of setting up the `$parseState` variable, I only had to define a single parameter to this function (and didn't rely on automatically resolving variables in the parent scope, which I generally try to avoid.)
