@@ -144,17 +144,7 @@ function Get-StringToken
                     {
                         if ($parseState.CurrentToken.Length -gt 0 -or -not $parseState.IgnoreConsecutiveDelimiters)
                         {
-                            if ($parseState.GroupLines)
-                            {
-                                $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
-                            }
-                            else
-                            {
-                                Write-Output $parseState.CurrentToken.ToString()
-                            }
-                                
-                            $parseState.CurrentToken.Length = 0
-                            $parseState.CurrentQualifier = $null
+                            CompleteCurrentToken -ParseState $parseState
                         }
 
                         if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
@@ -184,17 +174,7 @@ function Get-StringToken
                     # Closing qualifier
                     elseif ($currentChar -eq $parseState.CurrentQualifier)
                     {
-                        if ($parseState.GroupLines)
-                        {
-                            $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
-                        }
-                        else
-                        {
-                            Write-Output $parseState.CurrentToken.ToString()
-                        }
-                        
-                        $parseState.CurrentToken.Length = 0
-                        $parseState.CurrentQualifier = $null
+                        CompleteCurrentToken -ParseState $parseState
 
                         # Eat any non-delimiter, non-EOL text after the closing qualifier, plus the next delimiter.  Sets the loop up
                         # to begin processing the next token (or next consecutive delimiter) next time through.  End-of-line characters
@@ -234,17 +214,7 @@ function Get-StringToken
                     {
                         if ($parseState.CurrentToken.Length -gt 0 -or -not $parseState.IgnoreConsecutiveDelimiters)
                         {
-                            if ($parseState.GroupLines)
-                            {
-                                $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
-                            }
-                            else
-                            {
-                                Write-Output $parseState.CurrentToken.ToString()
-                            }
-                            
-                            $parseState.CurrentToken.Length = 0
-                            $parseState.CurrentQualifier = $null
+                            CompleteCurrentToken -ParseState $parseState
                         }
                     }
 
@@ -253,17 +223,7 @@ function Get-StringToken
                     {
                         if ($parseState.CurrentToken.Length -gt 0)
                         {
-                            if ($parseState.GroupLines)
-                            {
-                                $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
-                            }
-                            else
-                            {
-                                Write-Output $parseState.CurrentToken.ToString()
-                            }
-                            
-                            $parseState.CurrentToken.Length = 0
-                            $parseState.CurrentQualifier = $null
+                            CompleteCurrentToken -ParseState $parseState
                         }
 
                         if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
@@ -294,14 +254,7 @@ function Get-StringToken
     {
         if ($parseState.CurrentToken.Length -gt 0)
         {
-            if ($parseState.GroupLines)
-            {
-                $null = $parseState.LineGroup.Add($parseState.CurrentToken.ToString())
-            }
-            else
-            {
-                Write-Output $parseState.CurrentToken.ToString()
-            }
+            CompleteCurrentToken -ParseState $parseState
         }
 
         if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
@@ -396,4 +349,19 @@ function New-ParseState
         Span                        = [bool]$Span
         LineDelimiter               = $LineDelimiter
     }
+}
+
+function CompleteCurrentToken($ParseState)
+{
+    if ($ParseState.GroupLines)
+    {
+        $null = $ParseState.LineGroup.Add($ParseState.CurrentToken.ToString())
+    }
+    else
+    {
+        $ParseState.CurrentToken.ToString()
+    }
+
+    $ParseState.CurrentToken.Length = 0
+    $ParseState.CurrentQualifier = $null
 }
