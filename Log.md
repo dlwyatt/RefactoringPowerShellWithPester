@@ -176,12 +176,12 @@ Next steps:  Change references to the various variables initialized in the `begi
 
 Small, easy change, all tests still work.  Next, I'll remove the `$delimiters` variable initialization code from the `begin` block of `Get-StringToken`.  If I haven't missed anything, that variable should no longer be used anyway, and nothing will miss it.
 
-#### Commit [68bd52fe](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/68bd52fe1994da715da71c606237c6cf97599a0d) - Removing the old $delimiters variable
+#### Commit [68bd52fe](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/68bd52fe1994da715da71c606237c6cf97599a0d) - Removing the old `$delimiters` variable
 
 Success:  deleted those 9 lines of code, and all tests still worked.
 
 The next few refactoring steps are going to be more of the same:  Updating a reference to an old variable with a reference to a $parseState property instead, then removing the old variable.  Because writing these log file updates takes much longer than the refactoring itself, and because these steps will all be repeating the same task, I'll combine them into a single commit and log update.  (However, I'll still be running the Pester test script after each change.)
 
-#### Commit [086b8cf](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/086b8cfb01d3e07d7a4f0282d92093222b4f7bae) - Completing the transition to using $parseState
+#### Commit [086b8cf](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/086b8cfb01d3e07d7a4f0282d92093222b4f7bae) - Completing the transition to using `$parseState`
 
 The `begin` block of `Get-StringToken` has been completely extracted, and the rest of the function now only refers to `$parseState`.  More to come on that later, but for now, this makes it very easy to extract out whole bits of code into their own functions where appropriate.
