@@ -91,6 +91,9 @@ function Get-StringToken
 
     begin
     {
+        $null = $PSBoundParameters.Remove('String')
+        $parseState = New-ParseState @PSBoundParameters
+
         $currentToken = New-Object System.Text.StringBuilder
         $currentQualifer = $null
         
@@ -352,3 +355,92 @@ function Get-StringToken
     }
 
 } # function Get-StringToken
+
+function New-ParseState
+{
+    [CmdletBinding()]
+    param (
+        [ValidateNotNull()]
+        [System.String[]]
+        $Delimiter = @("`t",' '),
+
+        [ValidateNotNull()]
+        [System.String[]]
+        $Qualifier = @('"'),
+
+        [ValidateNotNull()]
+        [System.String[]]
+        $Escape = @(),
+
+        [ValidateNotNull()]
+        [System.String]
+        $LineDelimiter = "`r`n",
+        
+        [Switch]
+        $NoDoubleQualifier,
+
+        [Switch]
+        $Span,
+
+        [Switch]
+        $GroupLines,
+
+        [Switch]
+        $IgnoreConsecutiveDelimiters
+    )
+
+    $currentToken = New-Object System.Text.StringBuilder
+    $currentQualifer = $null
+        
+    $delimiters = @{}
+    foreach ($item in $Delimiter)
+    {
+        foreach ($character in $item.GetEnumerator())
+        {
+            $delimiters[$character] = $true
+        }
+    }
+
+    $qualifiers = @{}
+    foreach ($item in $Qualifier)
+    {
+        foreach ($character in $item.GetEnumerator())
+        {
+            $qualifiers[$character] = $true
+        }
+    }
+
+    $escapeChars = @{}
+    foreach ($item in $Escape)
+    {
+        foreach ($character in $item.GetEnumerator())
+        {
+            $escapeChars[$character] = $true
+        }
+    }
+
+    if ($NoDoubleQualifier)
+    {
+        $doubleQualifierIsEscape = $false
+    }
+    else
+    {
+        $doubleQualifierIsEscape = $true
+    }
+
+    $lineGroup = New-Object System.Collections.ArrayList
+
+    New-Object psobject -Property @{
+        CurrentToken                = $currentToken
+        CurrentQualifier            = $null
+        Delimiters                  = $delimiters
+        Qualifiers                  = $qualifiers
+        EscapeChars                 = $escapeChars
+        DoubleQualifierIsEscape     = $doubleQualifierIsEscape
+        LineGroup                   = $lineGroup
+        GroupLines                  = [bool]$GroupLines
+        IgnoreConsecutiveDelimiters = [bool]$IgnoreConsecutiveDelimiters
+        Span                        = [bool]$Span
+        LineDelimiter               = $LineDelimiter
+    }
+}
