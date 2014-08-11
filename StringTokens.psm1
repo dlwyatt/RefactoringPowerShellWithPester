@@ -281,24 +281,24 @@ function New-ParseState
     }
 
     New-Object psobject -Property @{
-        CurrentToken                = New-Object System.Text.StringBuilder
-        CurrentQualifier            = $null
-        Delimiters                  = $delimiters
-        Qualifiers                  = $qualifiers
-        EscapeChars                 = $escapeChars
-        DoubleQualifierIsEscape     = $doubleQualifierIsEscape
-        LineGroup                   = New-Object System.Collections.ArrayList
-        GroupLines                  = [bool]$GroupLines
-        IgnoreConsecutiveDelimiters = [bool]$IgnoreConsecutiveDelimiters
-        Span                        = [bool]$Span
-        LineDelimiter               = $LineDelimiter
+        CurrentToken                            = New-Object System.Text.StringBuilder
+        CurrentQualifier                        = $null
+        Delimiters                              = $delimiters
+        Qualifiers                              = $qualifiers
+        EscapeChars                             = $escapeChars
+        DoubleQualifierIsEscape                 = $doubleQualifierIsEscape
+        LineGroup                               = New-Object System.Collections.ArrayList
+        GroupLines                              = [bool]$GroupLines
+        ConsecutiveDelimitersProduceEmptyTokens = -not [bool]$IgnoreConsecutiveDelimiters
+        Span                                    = [bool]$Span
+        LineDelimiter                           = $LineDelimiter
     }
 }
 
 function CheckForCompletedToken($ParseState, [switch] $CheckingAtDelimiter)
 {
     if ($ParseState.CurrentToken.Length -gt 0 -or
-        ($CheckingAtDelimiter -and -not $ParseState.IgnoreConsecutiveDelimiters))
+        ($CheckingAtDelimiter -and $ParseState.ConsecutiveDelimitersProduceEmptyTokens))
     {
         CompleteCurrentToken -ParseState $ParseState
     }
