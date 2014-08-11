@@ -101,22 +101,21 @@ function Get-StringToken
         {
             # If the last $str value was in the middle of building a token when the end of the string was reached,
             # handle it before parsing the current $str.
-            if ($parseState.CurrentToken.Length -gt 0)
+            if ($parseState.CurrentQualifier -ne $null -and $parseState.Span)
             {
-                if ($parseState.CurrentQualifier -ne $null -and $parseState.Span)
-                {
-                    $null = $parseState.CurrentToken.Append($parseState.LineDelimiter)
-                }
-
-                else
+                $null = $parseState.CurrentToken.Append($parseState.LineDelimiter)
+            }
+            else
+            {
+                if ($parseState.CurrentToken.Length -gt 0)
                 {
                     CompleteCurrentToken -ParseState $parseState
                 }
-            }
 
-            if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
-            {
-                CompleteCurrentLineGroup -ParseState $parseState
+                if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
+                {
+                    CompleteCurrentLineGroup -ParseState $parseState
+                }
             }
 
             for ($i = 0; $i -lt $str.Length; $i++)

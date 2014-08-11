@@ -310,11 +310,11 @@ Describe 'Get-StringToken (public API)' {
         }
 
         It 'Properly handles multi-line input in conjunction with the -Span switch and quoted multi-line tokens' {
-            $strings = 'Zero "One', 'Two" "Three Four"', "`"Five`r`nSix`"", 'Seven Eight'
+            $strings = 'One "Two', 'Three" "Four Five"', "Six `"Seven`r`nEight`"", 'Nine Ten'
             $expected = @(
-                @{ Tokens = 'Zero', "One`r`nTwo", 'Three Four' }
-                @{ Tokens = @("Five`r`nSix") }
-                @{ Tokens = 'Seven', 'Eight' }
+                @{ Tokens = 'One', "Two`r`nThree", 'Four Five' }
+                @{ Tokens = 'Six', "Seven`r`nEight" }
+                @{ Tokens = 'Nine', 'Ten' }
             )
 
             $result = @($strings | Get-StringToken -GroupLines -Span)
