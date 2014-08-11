@@ -218,7 +218,7 @@ Replaced another block of that duplicated code with a call to `CompleteCurrentTo
 
 Same idea, different duplication.
 
-#### Commit []() - Reaping the benefits already
+#### Commit [70357b1d](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/70357b1dd135c7b5b3e041a2795b696a06a98a24) - Reaping the benefits already
 Now that some of the duplicate code has been refactored into easier to read bits, this jumped out at me:
 
 ```posh
