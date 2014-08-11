@@ -248,3 +248,33 @@ Now that some of the duplicate code has been refactored into easier to read bits
 ```
 
 We're completing the current line group even if the start of this string happened to be in the middle of a quoted token with the `Span` option enabled.  However, because this only happens if the quoted multi-line token is not the first token in a line group, the original test suite didn't properly test this condition, but it does now!  (And fails; fix coming in the next commit.)  To do:  Make sure the test code also tests this condition with embedded EOL characters in the string, just in case.)
+
+#### Commit [237f2e2d](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/237f2e2d3a00c927b6a0ab13ed278022f28c8ee7) - Fix for the bug identified in previous commit
+
+Here's the revised block of code, with logic that doesn't suck:
+```posh
+    process
+    {
+        foreach ($str in $String)
+        {
+            # If the last $str value was in the middle of building a token when the end of the string was reached,
+            # handle it before parsing the current $str.
+            if ($parseState.CurrentQualifier -ne $null -and $parseState.Span)
+            {
+                $null = $parseState.CurrentToken.Append($parseState.LineDelimiter)
+            }
+            else
+            {
+                if ($parseState.CurrentToken.Length -gt 0)
+                {
+                    CompleteCurrentToken -ParseState $parseState
+                }
+
+                if ($parseState.GroupLines -and $parseState.LineGroup.Count -gt 0)
+                {
+                    CompleteCurrentLineGroup -ParseState $parseState
+                }
+            }
+```
+
+Now, those two `if` statements containing the calls to `CompleteCurrentToken` and `CompleteCurrentLineGroup` are also duplicated quite a bit; more method extraction coming right up!
