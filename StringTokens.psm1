@@ -244,55 +244,39 @@ function New-ParseState
         $IgnoreConsecutiveDelimiters
     )
 
-    $delimiters = @{}
-    foreach ($item in $Delimiter)
-    {
-        foreach ($character in $item.GetEnumerator())
-        {
-            $delimiters[$character] = $true
-        }
-    }
-
-    $qualifiers = @{}
-    foreach ($item in $Qualifier)
-    {
-        foreach ($character in $item.GetEnumerator())
-        {
-            $qualifiers[$character] = $true
-        }
-    }
-
-    $escapeChars = @{}
-    foreach ($item in $Escape)
-    {
-        foreach ($character in $item.GetEnumerator())
-        {
-            $escapeChars[$character] = $true
-        }
-    }
-
-    if ($NoDoubleQualifier)
-    {
-        $doubleQualifierIsEscape = $false
-    }
-    else
-    {
-        $doubleQualifierIsEscape = $true
-    }
-
     New-Object psobject -Property @{
         CurrentToken                            = New-Object System.Text.StringBuilder
         CurrentQualifier                        = $null
-        Delimiters                              = $delimiters
-        Qualifiers                              = $qualifiers
-        EscapeChars                             = $escapeChars
-        DoubleQualifierIsEscape                 = $doubleQualifierIsEscape
+        Delimiters                              = Get-CharacterTableFromStrings -Strings $Delimiter
+        Qualifiers                              = Get-CharacterTableFromStrings -Strings $Qualifier
+        EscapeChars                             = Get-CharacterTableFromStrings -Strings $Escape
+        DoubleQualifierIsEscape                 = -not [bool]$NoDoubleQualifier
         LineGroup                               = New-Object System.Collections.ArrayList
         GroupLines                              = [bool]$GroupLines
         ConsecutiveDelimitersProduceEmptyTokens = -not [bool]$IgnoreConsecutiveDelimiters
         Span                                    = [bool]$Span
         LineDelimiter                           = $LineDelimiter
     }
+}
+
+function Get-CharacterTableFromStrings
+{
+    [CmdletBinding()]
+    param (
+        [string[]] $Strings = @()
+    )
+
+    $hashTable = @{}
+
+    foreach ($string in $Strings)
+    {
+        foreach ($character in $string.GetEnumerator())
+        {
+            $hashTable[$character] = $true
+        }
+    }
+
+    return $hashTable
 }
 
 function CheckForCompletedToken($ParseState, [switch] $CheckingAtDelimiter)
