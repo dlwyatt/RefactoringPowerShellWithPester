@@ -286,3 +286,7 @@ There were several instances of calls to `CompleteCurrentToken` or `CompleteCurr
 #### Commit [279c4b49](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/279c4b49579944828d7d875bd248865828c0f8ad) - Inverted boolean flag
 
 As mentioned in the previous update.  On that note, time to sleep.
+
+#### Commit [4d366dbf] (https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/4d366dbf15a5ad90938ee8c34cadde6d32df2448) - More duplicate code extraction
+
+Same idea as before, looking for duplicated blocks of code and turning that into a single function.
