@@ -146,6 +146,8 @@ function New-ParseState
         ConsecutiveDelimitersProduceEmptyTokens = -not [bool]$IgnoreConsecutiveDelimiters
         Span                                    = [bool]$Span
         LineDelimiter                           = $LineDelimiter
+        CurrentString                           = ''
+        CurrentIndex                            = 0
     }
 }
 
@@ -171,6 +173,8 @@ function Get-CharacterTableFromStrings
 
 function ParseInputString($ParseState, [string] $String)
 {
+    $ParseState.CurrentString = $String
+
     # If the last $String value was in the middle of building a token when the end of the string was reached,
     # handle it before parsing the current $String.
     if ($ParseState.CurrentQualifier -ne $null -and $ParseState.Span)
@@ -183,93 +187,19 @@ function ParseInputString($ParseState, [string] $String)
         CheckForCompletedLineGroup -ParseState $ParseState
     }
 
-    for ($i = 0; $i -lt $String.Length; $i++)
+    for ($parseState.CurrentIndex = 0; $parseState.CurrentIndex -lt $String.Length; $parseState.CurrentIndex++)
     {
-        $currentChar = $String.Chars($i)
-
         if ($ParseState.CurrentQualifier)
         {
-            # Line breaks in qualified token.
-            if (($currentChar -eq "`n" -or $currentChar -eq "`r") -and -not $ParseState.Span)
-            {
-                CheckForCompletedToken -ParseState $ParseState -CheckingAtDelimiter
-                CheckForCompletedLineGroup -ParseState $ParseState
-
-                # We're not including the line breaks in the token, so eat the rest of the consecutive line break characters.
-                while ($i+1 -lt $String.Length -and ($String.Chars($i+1) -eq "`r" -or $String.Chars($i+1) -eq "`n"))
-                {
-                    $i++
-                }
-            }
-
-            # Embedded, escaped qualifiers
-            elseif (($ParseState.EscapeChars.ContainsKey($currentChar) -or ($currentChar -eq $ParseState.CurrentQualifier -and $ParseState.DoubleQualifierIsEscape)) -and
-                        $i+1 -lt $String.Length -and $String.Chars($i+1) -eq $ParseState.CurrentQualifier)
-            {
-                $null = $ParseState.CurrentToken.Append($ParseState.CurrentQualifier)
-                $i++
-            }
-
-            # Closing qualifier
-            elseif ($currentChar -eq $ParseState.CurrentQualifier)
-            {
-                CompleteCurrentToken -ParseState $ParseState
-
-                # Eat any non-delimiter, non-EOL text after the closing qualifier, plus the next delimiter.  Sets the loop up
-                # to begin processing the next token (or next consecutive delimiter) next time through.  End-of-line characters
-                # are left alone, because eating them can interfere with the GroupLines switch behavior.
-                while ($i+1 -lt $String.Length -and $String.Chars($i+1) -ne "`r" -and $String.Chars($i+1) -ne "`n" -and -not $ParseState.Delimiters.ContainsKey($String.Chars($i+1)))
-                {
-                    $i++
-                }
-
-                if ($i+1 -lt $String.Length -and $ParseState.Delimiters.ContainsKey($String.Chars($i+1)))
-                {
-                    $i++
-                }
-            }
-
-            # Token content
-            else
-            {
-                $null = $ParseState.CurrentToken.Append($currentChar)
-            }
-
-        } # end if ($currentQualifier)
+            ProcessCharacterInQualifiedToken -ParseState $ParseState
+        }
 
         else
         {
-            Write-Debug ([int]$currentChar)
-
-            # Opening qualifier
-            if ($ParseState.CurrentToken.ToString() -match '^\s*$' -and $ParseState.Qualifiers.ContainsKey($currentChar))
-            {
-                $ParseState.CurrentQualifier = $currentChar
-                $ParseState.CurrentToken.Length = 0
-            }
-
-            # Delimiter
-            elseif ($ParseState.Delimiters.ContainsKey($currentChar))
-            {
-                CheckForCompletedToken -ParseState $ParseState -CheckingAtDelimiter
-            }
-
-            # Line breaks (not treated quite the same as delimiters)
-            elseif ($currentChar -eq "`n" -or $currentChar -eq "`r")
-            {
-                CheckForCompletedToken -ParseState $ParseState
-                CheckForCompletedLineGroup -ParseState $ParseState
-            }
-
-            # Token content
-            else
-            {
-                $null = $ParseState.CurrentToken.Append($currentChar)
-            }
-
+            ProcessCharacter -ParseState $ParseState
         } # -not $currentQualifier
 
-    } # end for $i = 0 to $str.Length
+    } # end for $parseState.CurrentIndex = 0 to $str.Length
 }
 
 function CheckForCompletedToken($ParseState, [switch] $CheckingAtDelimiter)
@@ -311,4 +241,86 @@ function CompleteCurrentLineGroup($ParseState)
     }
 
     $ParseState.LineGroup.Clear()
+}
+
+function ProcessCharacterInQualifiedToken($ParseState)
+{
+    $currentChar = $ParseState.CurrentString.Chars($ParseState.CurrentIndex)
+
+    # Line breaks in qualified token.
+    if (($currentChar -eq "`n" -or $currentChar -eq "`r") -and -not $ParseState.Span)
+    {
+        CheckForCompletedToken -ParseState $ParseState -CheckingAtDelimiter
+        CheckForCompletedLineGroup -ParseState $ParseState
+
+        # We're not including the line breaks in the token, so eat the rest of the consecutive line break characters.
+        while ($ParseState.CurrentIndex+1 -lt $ParseState.CurrentString.Length -and ($ParseState.CurrentString.Chars($ParseState.CurrentIndex+1) -eq "`r" -or $ParseState.CurrentString.Chars($ParseState.CurrentIndex+1) -eq "`n"))
+        {
+            $ParseState.CurrentIndex++
+        }
+    }
+
+    # Embedded, escaped qualifiers
+    elseif (($ParseState.EscapeChars.ContainsKey($currentChar) -or ($currentChar -eq $ParseState.CurrentQualifier -and $ParseState.DoubleQualifierIsEscape)) -and
+             $ParseState.CurrentIndex+1 -lt $ParseState.CurrentString.Length -and $ParseState.CurrentString.Chars($ParseState.CurrentIndex+1) -eq $ParseState.CurrentQualifier)
+    {
+        $null = $ParseState.CurrentToken.Append($ParseState.CurrentQualifier)
+        $ParseState.CurrentIndex++
+    }
+
+    # Closing qualifier
+    elseif ($currentChar -eq $ParseState.CurrentQualifier)
+    {
+        CompleteCurrentToken -ParseState $ParseState
+
+        # Eat any non-delimiter, non-EOL text after the closing qualifier, plus the next delimiter.  Sets the loop up
+        # to begin processing the next token (or next consecutive delimiter) next time through.  End-of-line characters
+        # are left alone, because eating them can interfere with the GroupLines switch behavior.
+        while ($ParseState.CurrentIndex+1 -lt $ParseState.CurrentString.Length -and $ParseState.CurrentString.Chars($ParseState.CurrentIndex+1) -ne "`r" -and $ParseState.CurrentString.Chars($ParseState.CurrentIndex+1) -ne "`n" -and -not $ParseState.Delimiters.ContainsKey($ParseState.CurrentString.Chars($ParseState.CurrentIndex+1)))
+        {
+            $ParseState.CurrentIndex++
+        }
+
+        if ($ParseState.CurrentIndex+1 -lt $ParseState.CurrentString.Length -and $ParseState.Delimiters.ContainsKey($ParseState.CurrentString.Chars($ParseState.CurrentIndex+1)))
+        {
+            $ParseState.CurrentIndex++
+        }
+    }
+
+    # Token content
+    else
+    {
+        $null = $ParseState.CurrentToken.Append($currentChar)
+    }
+}
+
+function ProcessCharacter($ParseState)
+{
+    $currentChar = $ParseState.CurrentString.Chars($ParseState.CurrentIndex)
+
+    # Opening qualifier
+    if ($ParseState.CurrentToken.ToString() -match '^\s*$' -and $ParseState.Qualifiers.ContainsKey($currentChar))
+    {
+        $ParseState.CurrentQualifier = $currentChar
+        $ParseState.CurrentToken.Length = 0
+    }
+
+    # Delimiter
+    elseif ($ParseState.Delimiters.ContainsKey($currentChar))
+    {
+        CheckForCompletedToken -ParseState $ParseState -CheckingAtDelimiter
+    }
+
+    # Line breaks (not treated quite the same as delimiters)
+    elseif ($currentChar -eq "`n" -or $currentChar -eq "`r")
+    {
+        CheckForCompletedToken -ParseState $ParseState
+        CheckForCompletedLineGroup -ParseState $ParseState
+    }
+
+    # Token content
+    else
+    {
+        $null = $ParseState.CurrentToken.Append($currentChar)
+    }
 }
