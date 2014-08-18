@@ -290,3 +290,13 @@ As mentioned in the previous update.  On that note, time to sleep.
 #### Commit [4d366dbf] (https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/4d366dbf15a5ad90938ee8c34cadde6d32df2448) - More duplicate code extraction
 
 Same idea as before, looking for duplicated blocks of code and turning that into a single function.
+
+#### Commit [6ce736f2](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/6ce7363f2ccda5ac534ed8cf840ebcec43339e12) - Extract Method
+
+I decided it was time to move most of the code out of the `Get-StringToken` function, leaving it with just the long param block and handling of piped input.  The rest of the parsing logic is farmed out to internal functions and the `$parseState` object.  This makes the `Get-StringToken` function about as short as it can be, taking into account the long param needed in a cmdlet.  To shorten it a bit more, I moved the parameter names and initializers onto the same lines as the parameter type declarations, which is still plenty readable.
+
+Coming up, I need to make a decision about how I might modify the parsing algorithm.  Right now, it basically reads one character at a time, making decisions based on state information contained in the ParseState object.  This approach lends itself well to input streamed via PowerShell's pipeline, as it doesn't necessarily matter which string object each character came from.
+
+On the other hand, if I gather up all of the input strings before parsing, it can simplify the algorithm quite a bit.  There would only ever be one "end of string" condition to deal with.  The trade-off here is that the entire input string would need to be held in memory, which may fail for very large input.
+
+I think it's probably important to take memory performance into account here, even if it means the parsing algorithm needs to be a bit more complicated.
