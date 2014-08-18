@@ -248,7 +248,7 @@ function ProcessCharacterInQualifiedToken($ParseState)
     $currentChar = $ParseState.CurrentString.Chars($ParseState.CurrentIndex)
 
     # Line breaks in qualified token.
-    if (($currentChar -eq "`n" -or $currentChar -eq "`r") -and -not $ParseState.Span)
+    if ((IsEndOfLine -ParseState $ParseState) -and -not $ParseState.Span)
     {
         CheckForCompletedToken -ParseState $ParseState -CheckingAtDelimiter
         CheckForCompletedLineGroup -ParseState $ParseState
@@ -298,29 +298,73 @@ function ProcessCharacter($ParseState)
 {
     $currentChar = $ParseState.CurrentString.Chars($ParseState.CurrentIndex)
 
-    # Opening qualifier
-    if ($ParseState.CurrentToken.ToString() -match '^\s*$' -and $ParseState.Qualifiers.ContainsKey($currentChar))
+    if (IsOpeningQualifier -ParseState $ParseState)
     {
         $ParseState.CurrentQualifier = $currentChar
         $ParseState.CurrentToken.Length = 0
     }
-
-    # Delimiter
-    elseif ($ParseState.Delimiters.ContainsKey($currentChar))
+    elseif (IsDelimiter -ParseState $ParseState)
     {
         CheckForCompletedToken -ParseState $ParseState -CheckingAtDelimiter
     }
-
-    # Line breaks (not treated quite the same as delimiters)
-    elseif ($currentChar -eq "`n" -or $currentChar -eq "`r")
+    elseif (IsEndOfLine -ParseState $ParseState)
     {
         CheckForCompletedToken -ParseState $ParseState
         CheckForCompletedLineGroup -ParseState $ParseState
     }
-
-    # Token content
     else
     {
         $null = $ParseState.CurrentToken.Append($currentChar)
     }
+}
+
+function IsOpeningQualifier($ParseState, [uint32] $Offset = 0)
+{
+    return (IsOnlyWhitespace -String $ParseState.CurrentToken) -and (IsQualifier -ParseState $ParseState -Offset $Offset)
+}
+
+function IsOnlyWhitespace([string] $String)
+{
+    return $String -notmatch '\S'
+}
+
+function IsQualifier($ParseState, [uint32] $Offset = 0)
+{
+    if (IsOutsideCurrentStringBoundaries -ParseState $ParseState -Offset $Offset)
+    {
+        return $false
+    }
+
+    $char = $ParseState.CurrentString.Chars($ParseState.CurrentIndex + $Offset)
+    return $ParseState.Qualifiers.ContainsKey($char)
+}
+
+function IsDelimiter($ParseState, [uint32] $Offset = 0)
+{
+    if (IsOutsideCurrentStringBoundaries -ParseState $ParseState -Offset $Offset)
+    {
+        return $false
+    }
+
+    $char = $ParseState.CurrentString.Chars($ParseState.CurrentIndex + $Offset)
+    return $ParseState.Delimiters.ContainsKey($char)
+}
+
+function IsEndOfLine($ParseState, [uint32] $Offset = 0)
+{
+    if (IsOutsideCurrentStringBoundaries -ParseState $ParseState -Offset $Offset)
+    {
+        return $false
+    }
+
+    $char = $ParseState.CurrentString.Chars($ParseState.CurrentIndex + $Offset)
+    return $char -eq "`n" -or $char -eq "`r"
+}
+
+function IsOutsideCurrentStringBoundaries($ParseState, [uint32] $Offset = 0)
+{
+    $string = $ParseState.CurrentString
+    $position = $ParseState.CurrentIndex + $Offset
+
+    return [string]::IsNullOrEmpty($string) -or $position -ge $string.Length
 }
