@@ -300,3 +300,12 @@ Coming up, I need to make a decision about how I might modify the parsing algori
 On the other hand, if I gather up all of the input strings before parsing, it can simplify the algorithm quite a bit.  There would only ever be one "end of string" condition to deal with.  The trade-off here is that the entire input string would need to be held in memory, which may fail for very large input.
 
 I think it's probably important to take memory performance into account here, even if it means the parsing algorithm needs to be a bit more complicated.
+
+#### Commit [1b3acd80](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/1b3acd805515a410f17fef84f9d92dc4a662b544) - Moved state information to object, extracted methods.
+
+I'm starting to combine related steps into a single commit in the interest of speeding this process up a bit.  In this case, I did two things:
+
+- Moved the string being parsed (`$String`) and the loop index (`$i`) into the ParseState object.
+- Extracted the code for handling input characters inside and outside of a quoted token into their own functions.
+
+Just as in the last commit, very little code is changing here; I'm just moving parts of it around.  The goal is to have individual functions that are as short and as easy to understand as possible.  `ProcessInputString` is at a fairly reasonable state now, with one loop and a branch inside that loop.  I'll be doing quite a bit more of this type of change in upcoming commits, and I'll also want to simplify many of the conditionals by moving those bodies into functions with descriptive names as well.  (For example, instead of ```if ($currentChar -eq "`n" -or $currentChar -eq "`r")```, we'd have something like `if (IsLineEndingCharacter -Character $currentChar`).)
