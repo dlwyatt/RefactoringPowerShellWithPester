@@ -309,3 +309,9 @@ I'm starting to combine related steps into a single commit in the interest of sp
 - Extracted the code for handling input characters inside and outside of a quoted token into their own functions.
 
 Just as in the last commit, very little code is changing here; I'm just moving parts of it around.  The goal is to have individual functions that are as short and as easy to understand as possible.  `ProcessInputString` is at a fairly reasonable state now, with one loop and a branch inside that loop.  I'll be doing quite a bit more of this type of change in upcoming commits, and I'll also want to simplify many of the conditionals by moving those bodies into functions with descriptive names as well.  (For example, instead of ```if ($currentChar -eq "`n" -or $currentChar -eq "`r")```, we'd have something like `if (IsLineEndingCharacter -Character $currentChar`).)
+
+#### Commit [8e7f1d85](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/8e7f1d851c198dc13741f32bd775087b3bfc68f2) - More method extraction
+
+I got a bit carried away on this one, and probably should have made a commit sooner.  I've started attacking those complex conditionals I mentioned in the last log update, pulling them out into their own methods.  There's still more to come here, but `ProcessCharacter` already looks pretty good.
+
+Note that in an object-oriented language, even `ProcessCharacter` would still be frowned on.  According to object-oriented practices, you generally don't want to see a big `switch` or `if` / `elseif` / `else` block; instead, you would use polymorphism to determine the behavior at runtime.  PowerShell isn't really an object-oriented language, though.  It's more of a procedural language which can consume objects.  I could technically embed a bunch of C# code here to use object-oriented design patterns, but I'd rather leave this completely implemented in PowerShell.  That means there will be some branches in the code.
