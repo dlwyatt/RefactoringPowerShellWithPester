@@ -175,11 +175,9 @@ function ParseInputString($ParseState, [string] $String)
 {
     $ParseState.CurrentString = $String
 
-    # If the last $String value was in the middle of building a token when the end of the string was reached,
-    # handle it before parsing the current $String.
-    if ($ParseState.CurrentQualifier -ne $null -and $ParseState.Span)
+    if ((IsInsideQuotedToken -ParseState $ParseState) -and $ParseState.Span)
     {
-        $null = $ParseState.CurrentToken.Append($ParseState.LineDelimiter)
+        AppendLineDelimiter -ParseState $ParseState
     }
     else
     {
@@ -189,17 +187,64 @@ function ParseInputString($ParseState, [string] $String)
 
     for ($parseState.CurrentIndex = 0; $parseState.CurrentIndex -lt $String.Length; $parseState.CurrentIndex++)
     {
-        if ($ParseState.CurrentQualifier)
+        if (IsInsideQuotedToken -ParseState $ParseState)
         {
             ProcessCharacterInQualifiedToken -ParseState $ParseState
         }
-
         else
         {
             ProcessCharacter -ParseState $ParseState
-        } # -not $currentQualifier
+        }
+    }
+}
 
-    } # end for $parseState.CurrentIndex = 0 to $str.Length
+function ProcessCharacterInQualifiedToken($ParseState)
+{
+    $currentChar = CurrentCharacter -ParseState $ParseState
+
+    if ((IsEndOfLine -ParseState $ParseState) -and -not $ParseState.Span)
+    {
+        CheckForCompletedToken -ParseState $ParseState -CheckingAtDelimiter
+        CheckForCompletedLineGroup -ParseState $ParseState
+        SkipEndOfLineCharacters -ParseState $ParseState
+    }
+    elseif (IsEscapedQualifier -ParseState $ParseState)
+    {
+        AppendCurrentQualifier -ParseState $ParseState
+        SkipCharacter -ParseState $ParseState
+    }
+    elseif (IsQualifier -ParseState $ParseState -CurrentQualifierOnly)
+    {
+        CompleteCurrentToken -ParseState $ParseState
+        SkipExtraTextAfterClosingQualifier -ParseState $ParseState
+    }
+    else
+    {
+        AppendStringToCurrentToken -ParseState $ParseState -String $currentChar
+    }
+}
+
+function ProcessCharacter($ParseState)
+{
+    $currentChar = CurrentCharacter -ParseState $ParseState
+
+    if (IsOpeningQualifier -ParseState $ParseState)
+    {
+        SetCurrentQualifier -ParseState $ParseState -Qualifier $currentChar
+    }
+    elseif (IsDelimiter -ParseState $ParseState)
+    {
+        CheckForCompletedToken -ParseState $ParseState -CheckingAtDelimiter
+    }
+    elseif (IsEndOfLine -ParseState $ParseState)
+    {
+        CheckForCompletedToken -ParseState $ParseState
+        CheckForCompletedLineGroup -ParseState $ParseState
+    }
+    else
+    {
+        AppendStringToCurrentToken -ParseState $ParseState -String $currentChar
+    }
 }
 
 function CheckForCompletedToken($ParseState, [switch] $CheckingAtDelimiter)
@@ -222,8 +267,7 @@ function CompleteCurrentToken($ParseState)
         $ParseState.CurrentToken.ToString()
     }
 
-    $ParseState.CurrentToken.Length = 0
-    $ParseState.CurrentQualifier = $null
+    SetCurrentQualifier -ParseState $ParseState -Qualifier $null
 }
 
 function CheckForCompletedLineGroup($ParseState)
@@ -241,80 +285,6 @@ function CompleteCurrentLineGroup($ParseState)
     }
 
     $ParseState.LineGroup.Clear()
-}
-
-function ProcessCharacterInQualifiedToken($ParseState)
-{
-    $currentChar = $ParseState.CurrentString.Chars($ParseState.CurrentIndex)
-
-    # Line breaks in qualified token.
-    if ((IsEndOfLine -ParseState $ParseState) -and -not $ParseState.Span)
-    {
-        CheckForCompletedToken -ParseState $ParseState -CheckingAtDelimiter
-        CheckForCompletedLineGroup -ParseState $ParseState
-
-        # We're not including the line breaks in the token, so eat the rest of the consecutive line break characters.
-        while (IsEndOfLine -ParseState $ParseState -Offset 1)
-        {
-            $ParseState.CurrentIndex++
-        }
-    }
-
-    # Embedded, escaped qualifiers
-    elseif (IsEscapedQualifier -ParseState $ParseState)
-    {
-        $null = $ParseState.CurrentToken.Append($ParseState.CurrentQualifier)
-        $ParseState.CurrentIndex++
-    }
-
-    # Closing qualifier
-    elseif ($currentChar -eq $ParseState.CurrentQualifier)
-    {
-        CompleteCurrentToken -ParseState $ParseState
-
-        # Eat any non-delimiter, non-EOL text after the closing qualifier, plus the next delimiter.  Sets the loop up
-        # to begin processing the next token (or next consecutive delimiter) next time through.  End-of-line characters
-        # are left alone, because eating them can interfere with the GroupLines switch behavior.
-        while ($ParseState.CurrentIndex+1 -lt $ParseState.CurrentString.Length -and $ParseState.CurrentString.Chars($ParseState.CurrentIndex+1) -ne "`r" -and $ParseState.CurrentString.Chars($ParseState.CurrentIndex+1) -ne "`n" -and -not $ParseState.Delimiters.ContainsKey($ParseState.CurrentString.Chars($ParseState.CurrentIndex+1)))
-        {
-            $ParseState.CurrentIndex++
-        }
-
-        if ($ParseState.CurrentIndex+1 -lt $ParseState.CurrentString.Length -and $ParseState.Delimiters.ContainsKey($ParseState.CurrentString.Chars($ParseState.CurrentIndex+1)))
-        {
-            $ParseState.CurrentIndex++
-        }
-    }
-
-    # Token content
-    else
-    {
-        $null = $ParseState.CurrentToken.Append($currentChar)
-    }
-}
-
-function ProcessCharacter($ParseState)
-{
-    $currentChar = $ParseState.CurrentString.Chars($ParseState.CurrentIndex)
-
-    if (IsOpeningQualifier -ParseState $ParseState)
-    {
-        $ParseState.CurrentQualifier = $currentChar
-        $ParseState.CurrentToken.Length = 0
-    }
-    elseif (IsDelimiter -ParseState $ParseState)
-    {
-        CheckForCompletedToken -ParseState $ParseState -CheckingAtDelimiter
-    }
-    elseif (IsEndOfLine -ParseState $ParseState)
-    {
-        CheckForCompletedToken -ParseState $ParseState
-        CheckForCompletedLineGroup -ParseState $ParseState
-    }
-    else
-    {
-        $null = $ParseState.CurrentToken.Append($currentChar)
-    }
 }
 
 function IsOpeningQualifier($ParseState, [uint32] $Offset = 0)
@@ -391,6 +361,80 @@ function IsEscape($ParseState, [uint32] $Offset = 0)
 
     return $ParseState.EscapeChars.ContainsKey($char) -or
            ($ParseState.DoubleQualifierIsEscape -and (IsQualifier -ParseState $ParseState -Offset $Offset -CurrentQualifierOnly))
+}
+
+function IsEndOfLineOrDelimiter($ParseState, [uint32] $Offset = 0)
+{
+    if (IsOutsideCurrentStringBoundaries -ParseState $ParseState -Offset $Offset)
+    {
+        return $false
+    }
+
+    $char = $ParseState.CurrentString.Chars($ParseState.CurrentIndex + $Offset)
+    return $char -eq "`r" -or $char -eq "`n" -or (IsDelimiter -ParseState $ParseState -Offset $Offset)
+}
+
+function IsInsideQuotedToken($ParseState)
+{
+    return $ParseState.CurrentQualifier -ne $null
+}
+
+function SkipExtraTextAfterClosingQualifier($ParseState)
+{
+    while (-not (IsOutsideCurrentStringBoundaries -ParseState $ParseState -Offset 1) -and
+           -not (IsEndOfLineOrDelimiter -ParseState $ParseState -Offset 1))
+    {
+        SkipCharacter -ParseState $ParseState
+    }
+
+    if (IsDelimiter -ParseState $ParseState -Offset 1)
+    {
+        SkipCharacter -ParseState $ParseState
+    }
+}
+
+function SkipEndOfLineCharacters($ParseState)
+{
+    while (IsEndOfLine -ParseState $ParseState -Offset 1)
+    {
+        SkipCharacter -ParseState $ParseState
+    }
+}
+
+function AppendCurrentQualifier($ParseState)
+{
+    AppendStringToCurrentToken -ParseState $ParseState -String $ParseState.CurrentQualifier
+}
+
+function CurrentCharacter($ParseState)
+{
+    if ($ParseState.CurrentIndex -ge $ParseState.CurrentString.Length)
+    {
+        return $null
+    }
+
+    return $ParseState.CurrentString.Chars($ParseState.CurrentIndex)
+}
+
+function AppendLineDelimiter($ParseState)
+{
+    AppendStringToCurrentToken -ParseState $ParseState -String $ParseState.LineDelimiter
+}
+
+function AppendStringToCurrentToken($ParseState, [string] $String)
+{
+    $null = $ParseState.CurrentToken.Append($String)
+}
+
+function SetCurrentQualifier($ParseState, [Nullable[char]] $Qualifier)
+{
+    $ParseState.CurrentQualifier = $Qualifier
+    $ParseState.CurrentToken.Length = 0
+}
+
+function SkipCharacter($ParseState)
+{
+    $ParseState.CurrentIndex++
 }
 
 function IsOutsideCurrentStringBoundaries($ParseState, [uint32] $Offset = 0)
