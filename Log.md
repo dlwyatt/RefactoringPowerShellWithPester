@@ -325,3 +325,52 @@ At some point, I may move things in that direction anyway.  In PowerShell, you c
 #### Commit [6cae1241](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/6cae1241ebf854bf91af2ee65f0cd9440e7e3890) - More method extraction
 
 More of the same stuff, just looking for loops and conditional logic that can be pulled out into functions with descriptive names, to hide the inner details of the ParseState object from the higher level code.
+
+#### Stepping back a bit
+
+I've made a lot of changes, some of them without much thought (which is probably a mistake that will cause me more work later, but they're still little steps in the right direction.)  I just ran the following commands to generate a report of the functions in the module and their respective lengths:
+
+```posh
+$ast = [System.Management.Automation.Language.Parser]::ParseFile("$pwd\StringTokens.psm1", [ref] $null, [ref] $null)
+$functions = $ast.FindAll({$args[0] -is [System.Management.Automation.Language.FunctionDefinitionAst]}, $true)
+$functions | Format-Table Name, @{Label = 'Length'; Expression = { $_.Extent.EndLineNumber - $_.Extent.StartLineNumber + 1 } } -Autosize
+
+<#
+Name                               Length
+----                               ------
+Get-StringToken                        50
+New-ParseState                         49
+Get-CharacterTableFromStrings          19
+ParseInputString                       26
+ProcessCharacterInQualifiedToken       25
+ProcessCharacter                       22
+CheckForCompletedToken                  8
+CompleteCurrentToken                   13
+CheckForCompletedLineGroup              7
+CompleteCurrentLineGroup                8
+IsOpeningQualifier                      4
+IsOnlyWhitespace                        4
+IsQualifier                            18
+IsDelimiter                            10
+IsEndOfLine                            10
+IsEscapedQualifier                     11
+IsEscape                               12
+IsEndOfLineOrDelimiter                 10
+IsInsideQuotedToken                     4
+SkipExtraTextAfterClosingQualifier     13
+SkipEndOfLineCharacters                 7
+AppendCurrentQualifier                  4
+CurrentCharacter                        9
+AppendLineDelimiter                     4
+AppendStringToCurrentToken              4
+SetCurrentQualifier                     5
+SkipCharacter                           4
+IsOutsideCurrentStringBoundaries        7
+#>
+```
+
+That's not too bad.  `Get-StringToken` is still mostly param block, and `New-ParseState` is what it is, for now (mostly one large hashtable literal.)
+
+At this point, I probably don't need to worry about shortening functions any more than I already have, and it's more about eliminating any more duplication and making sure that the code is easy to read.  I might change some names, move quite a few of the functions into ScriptMethods on the ParseState object, that sort of thing.  However, even if I were to stop right here, the code is already in a much better state than when this project started.  Instead of one monster 300-line function, the logic has been broken out into 28 smaller functions, each of which is quite a lot easier to understand.  There's still room to improve, though; I haven't quite finished separating the levels of abstraction around ParseState (in particular, that `for` loop in `ParseInputString` is an eyesore), and I'm starting to dislike how I wrote all those `IsSomething` functions that take ParseState and Offset as parameters.  Will probably change how those were done in a future commit.
+
+For now, it's 1:15 in the morning, and I'm an idiot for staying up this late.  Off to bed!
