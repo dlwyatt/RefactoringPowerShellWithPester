@@ -315,3 +315,9 @@ Just as in the last commit, very little code is changing here; I'm just moving p
 I got a bit carried away on this one, and probably should have made a commit sooner.  I've started attacking those complex conditionals I mentioned in the last log update, pulling them out into their own methods.  There's still more to come here, but `ProcessCharacter` already looks pretty good.
 
 Note that in an object-oriented language, even `ProcessCharacter` would still be frowned on.  According to object-oriented practices, you generally don't want to see a big `switch` or `if` / `elseif` / `else` block; instead, you would use polymorphism to determine the behavior at runtime.  PowerShell isn't really an object-oriented language, though.  It's more of a procedural language which can consume objects.  I could technically embed a bunch of C# code here to use object-oriented design patterns, but I'd rather leave this completely implemented in PowerShell.  That means there will be some branches in the code.
+
+#### Commit [c2fc9cf7](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/c2fc9cf7aec2ac70c5d47f133161b6fb72cb5655) - More method extraction
+
+Most of the conditionals and loops in `ProcessCharacterInQualifiedToken` and `ProcessCharacter` now make calls out to other functions.  Next update will complete this transformation.  The idea here is to hide the details of what's in the ParseState object in the higher levels of the code, so the ParseState object can just be passed around.  At the lowest level of abstraction, the details in the ParseState object are known; if this was being done in an object-oriented language, those would be methods on the ParseState object.
+
+At some point, I may move things in that direction anyway.  In PowerShell, you can emulate some object oriented behavior with things like `New-Module -AsCustomObject` to produce an object with public or private fields.
