@@ -321,3 +321,7 @@ Note that in an object-oriented language, even `ProcessCharacter` would still be
 Most of the conditionals and loops in `ProcessCharacterInQualifiedToken` and `ProcessCharacter` now make calls out to other functions.  Next update will complete this transformation.  The idea here is to hide the details of what's in the ParseState object in the higher levels of the code, so the ParseState object can just be passed around.  At the lowest level of abstraction, the details in the ParseState object are known; if this was being done in an object-oriented language, those would be methods on the ParseState object.
 
 At some point, I may move things in that direction anyway.  In PowerShell, you can emulate some object oriented behavior with things like `New-Module -AsCustomObject` to produce an object with public or private fields.
+
+#### Commit [6cae1241](https://github.com/dlwyatt/RefactoringPowerShellWithPester/commit/6cae1241ebf854bf91af2ee65f0cd9440e7e3890) - More method extraction
+
+More of the same stuff, just looking for loops and conditional logic that can be pulled out into functions with descriptive names, to hide the inner details of the ParseState object from the higher level code.
