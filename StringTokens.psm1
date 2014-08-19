@@ -254,15 +254,14 @@ function ProcessCharacterInQualifiedToken($ParseState)
         CheckForCompletedLineGroup -ParseState $ParseState
 
         # We're not including the line breaks in the token, so eat the rest of the consecutive line break characters.
-        while ($ParseState.CurrentIndex+1 -lt $ParseState.CurrentString.Length -and ($ParseState.CurrentString.Chars($ParseState.CurrentIndex+1) -eq "`r" -or $ParseState.CurrentString.Chars($ParseState.CurrentIndex+1) -eq "`n"))
+        while (IsEndOfLine -ParseState $ParseState -Offset 1)
         {
             $ParseState.CurrentIndex++
         }
     }
 
     # Embedded, escaped qualifiers
-    elseif (($ParseState.EscapeChars.ContainsKey($currentChar) -or ($currentChar -eq $ParseState.CurrentQualifier -and $ParseState.DoubleQualifierIsEscape)) -and
-             $ParseState.CurrentIndex+1 -lt $ParseState.CurrentString.Length -and $ParseState.CurrentString.Chars($ParseState.CurrentIndex+1) -eq $ParseState.CurrentQualifier)
+    elseif (IsEscapedQualifier -ParseState $ParseState)
     {
         $null = $ParseState.CurrentToken.Append($ParseState.CurrentQualifier)
         $ParseState.CurrentIndex++
@@ -328,7 +327,7 @@ function IsOnlyWhitespace([string] $String)
     return $String -notmatch '\S'
 }
 
-function IsQualifier($ParseState, [uint32] $Offset = 0)
+function IsQualifier($ParseState, [uint32] $Offset = 0, [switch] $CurrentQualifierOnly)
 {
     if (IsOutsideCurrentStringBoundaries -ParseState $ParseState -Offset $Offset)
     {
@@ -336,7 +335,15 @@ function IsQualifier($ParseState, [uint32] $Offset = 0)
     }
 
     $char = $ParseState.CurrentString.Chars($ParseState.CurrentIndex + $Offset)
-    return $ParseState.Qualifiers.ContainsKey($char)
+
+    if ($CurrentQualifierOnly)
+    {
+        return $char -eq $ParseState.CurrentQualifier
+    }
+    else
+    {
+        return $ParseState.Qualifiers.ContainsKey($char)
+    }
 }
 
 function IsDelimiter($ParseState, [uint32] $Offset = 0)
@@ -359,6 +366,31 @@ function IsEndOfLine($ParseState, [uint32] $Offset = 0)
 
     $char = $ParseState.CurrentString.Chars($ParseState.CurrentIndex + $Offset)
     return $char -eq "`n" -or $char -eq "`r"
+}
+
+function IsEscapedQualifier($ParseState, [uint32] $Offset = 0)
+{
+    if (IsOutsideCurrentStringBoundaries -ParseState $ParseState -Offset ($Offset + 1))
+    {
+        return $false
+    }
+
+    $currentChar = $ParseState.CurrentString.Chars($ParseState.CurrentIndex + $Offset)
+
+    return (IsQualifier -ParseState $ParseState -Offset 1 -CurrentQualifierOnly) -and (IsEscape -ParseState $ParseState)
+}
+
+function IsEscape($ParseState, [uint32] $Offset = 0)
+{
+    if (IsOutsideCurrentStringBoundaries -ParseState $ParseState -Offset $Offset)
+    {
+        return $false
+    }
+
+    $char = $ParseState.CurrentString.Chars($ParseState.CurrentIndex + $Offset)
+
+    return $ParseState.EscapeChars.ContainsKey($char) -or
+           ($ParseState.DoubleQualifierIsEscape -and (IsQualifier -ParseState $ParseState -Offset $Offset -CurrentQualifierOnly))
 }
 
 function IsOutsideCurrentStringBoundaries($ParseState, [uint32] $Offset = 0)
