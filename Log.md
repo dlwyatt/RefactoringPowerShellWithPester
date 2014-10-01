@@ -39,7 +39,7 @@ Passed: 6 Failed: 0
 #>
 ```
 
-I may think of other tests for this "default behavior" context as time goes on, but for now, it's a good start.  Next steps:  look more closely at each of the other parameters to Get-StringToken, and write more tests which verify the output when they're used.  Note that I'm not touching the ugly code at all yet.  I'm not going to do that until I have a complete suite of tests for all of the code.  Speaking of which, here's how I can use Pester's code coverage analysis feature (new to the v3.0 beta) to get an idea of how much progress I'm making:
+I may think of other tests for this "default behavior" context as time goes on, but for now, it's a good start.  Next steps:  look more closely at each of the other parameters to Get-StringToken, and write more tests which verify the output when they're used.  Note that I'm not touching the ugly code at all yet.  I'm not going to do that until I have a complete suite of tests for all of the code.  Speaking of which, here's how I can use Pester's code coverage analysis feature to get an idea of how much progress I'm making:
 
 ```posh
 Invoke-Pester -CodeCoverage .\StringTokens.psm1
